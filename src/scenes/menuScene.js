@@ -59,7 +59,11 @@ export default class MenuScene extends Phaser.Scene {
         this.switchButton = this.add.image(rectX, bottomWireY + switchOffsetY, 'switch-off')
             .setScale(0.7)
             .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
+            .setInteractive({ 
+                useHandCursor: true,
+                pixelPerfect: true,
+                alphaTolerance: 128
+            })
             .on('pointerdown', () => this.toggleSwitch());
 
         // ui elem
@@ -205,7 +209,35 @@ export default class MenuScene extends Phaser.Scene {
             buttonHeight, 
             cornerRadius // Polmer!
         );
-        this.startButtonBackground.setDepth(-1); 
+        this.startButtonBackground.setDepth(10);
+        this.startButtonBackground.setInteractive(
+            new Phaser.Geom.Rectangle(
+                rectX - buttonWidth / 2,
+                (rectY + 100) - buttonHeight / 2,
+                buttonWidth,
+                buttonHeight
+            ),
+            Phaser.Geom.Rectangle.Contains
+        );
+        this.startButtonBackground.on('pointerover', () => {
+            if (this.isSwitchOn) {
+                this.input.setDefaultCursor('pointer');
+                this.startButtonBackground.clear();
+                this.startButtonBackground.fillStyle(0x0f5cad, 1);
+                this.startButtonBackground.fillRoundedRect(rectX - buttonWidth / 2, (rectY + 100) - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
+            }
+        });
+        this.startButtonBackground.on('pointerout', () => {
+            if (this.isSwitchOn) {
+                this.input.setDefaultCursor('default');
+                this.startButtonBackground.clear();
+                this.startButtonBackground.fillStyle(0x3399ff, 1);
+                this.startButtonBackground.fillRoundedRect(rectX - buttonWidth / 2, (rectY + 100) - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
+            }
+        });
+        this.startButtonBackground.on('pointerdown', () => {
+            if (this.isSwitchOn) this.scene.start('LoginScene');
+        }); 
 
         // naslov
         this.title = this.add.text(rectX, rectY, 'LABORATORIJ', { 
@@ -222,20 +254,7 @@ export default class MenuScene extends Phaser.Scene {
             color: '#aaaaaa', 
         })
             .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            
-            // hower
-            .on('pointerover', () => {
-                if (this.isSwitchOn)
-                    this.startButtonBackground.fillStyle(0x0f5cadff, 1).fillRoundedRect(rectX - buttonWidth / 2, (rectY + 100) - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
-            })
-            .on('pointerout', () => {
-                if (this.isSwitchOn)
-                    this.startButtonBackground.fillStyle(0x3399ff, 1).fillRoundedRect(rectX - buttonWidth / 2, (rectY + 100) - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
-            })
-            .on('pointerdown', () => {
-                if (this.isSwitchOn) this.scene.start('LoginScene');
-            });
+            .setDepth(11);
 
         console.log(`${localStorage.getItem('username')}`);
 
