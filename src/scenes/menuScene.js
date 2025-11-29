@@ -151,14 +151,7 @@ export default class MenuScene extends Phaser.Scene {
     hideComponents() {
         this.tweens.killTweensOf([this.desk, this.gridGraphics, ...this.fixedComponents]);
         
-        this.fixedComponents.forEach((img, i) => {
-            this.tweens.add({
-                targets: img,
-                alpha: 0,
-                duration: 400,
-                delay: i * 30
-            });
-        });
+        this.fixedComponents.forEach(img => img.setAlpha(0));
     }
 
     toggleSwitch() {
@@ -244,7 +237,6 @@ export default class MenuScene extends Phaser.Scene {
             }
         });
         this.startButtonBackground.on('pointerdown', () => {
-                this.input.setDefaultCursor('default');
             if (this.isSwitchOn) this.scene.start('LoginScene');
         }); 
 
