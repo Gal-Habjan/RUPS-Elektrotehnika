@@ -31,7 +31,6 @@ export default class MenuScene extends Phaser.Scene {
         this.createDeskBackground(width, height);
 
         // zice 
-        this.cameras.main.setBackgroundColor('#ffffff');
         const wireThickness = 9.5;
         const wireColor = 0x1a1a1a;
         const rectWidth = 900;
@@ -84,11 +83,11 @@ export default class MenuScene extends Phaser.Scene {
         // svetla lesena povrsina
         this.desk = this.add.rectangle(0, 0, width, height, 0xe0c9a6)
             .setOrigin(0)
-            .setAlpha(0)
+            .setAlpha(1)
             .setDepth(-2);
 
         // mreza
-        this.gridGraphics = this.add.graphics({ alpha: 0 });
+        this.gridGraphics = this.add.graphics({ alpha: 1 });
         this.gridGraphics.setDepth(-1);
         this.gridGraphics.lineStyle(1, 0x8b7355, 0.35);
 
@@ -134,6 +133,8 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     showComponents() {
+        this.tweens.killTweensOf([this.desk, this.gridGraphics, ...this.fixedComponents]);
+        
         this.tweens.add({ targets: this.desk, alpha: 1, duration: 800 });
         this.tweens.add({ targets: this.gridGraphics, alpha: 1, duration: 1200 });
 
@@ -148,9 +149,16 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     hideComponents() {
-        this.desk?.setAlpha(0);
-        this.gridGraphics?.setAlpha(0);
-        this.fixedComponents.forEach(img => img.setAlpha(0));
+        this.tweens.killTweensOf([this.desk, this.gridGraphics, ...this.fixedComponents]);
+        
+        this.fixedComponents.forEach((img, i) => {
+            this.tweens.add({
+                targets: img,
+                alpha: 0,
+                duration: 400,
+                delay: i * 30
+            });
+        });
     }
 
     toggleSwitch() {
