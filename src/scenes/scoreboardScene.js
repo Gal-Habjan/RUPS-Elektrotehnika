@@ -33,8 +33,8 @@ export default class ScoreboardScene extends Phaser.Scene {
         // okvir
         const panelWidth = 600;
         const panelHeight = 400;
-        const panelX = width / 2 - panelWidth / 2;
-        const panelY = height / 2 - panelHeight / 2 - 30;
+        const panelX = width / 2 - panelWidth / 2 ;
+        const panelY = height / 2 - panelHeight / 2 - 200;
 
         const panel = this.add.graphics();
         panel.fillStyle(0xffffff, 0.92);
