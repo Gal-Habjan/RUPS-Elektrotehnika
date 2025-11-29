@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { LabTable } from '../componentsVisual/LabTable';
 
 export default class LoginScene extends Phaser.Scene {
     constructor() {
@@ -28,36 +29,8 @@ export default class LoginScene extends Phaser.Scene {
         const tableWidth = 500;
         const tableHeight = 250;
 
-        // zgornja ploskev mize
-        this.add.rectangle(tableX, tableY, tableWidth, 30, 0x8b4513).setOrigin(0.5);
-        // površina mize z mrežo
-        const surface = this.add.rectangle(tableX, tableY + 15, tableWidth - 30, tableHeight - 30, 0xa0826d).setOrigin(0.5, 0);
-        const grid = this.add.graphics();
-        grid.lineStyle(1, 0x8b7355, 0.3);
-        const gridSize = 30;
-        const gridStartX = tableX - (tableWidth - 30) / 2;
-        const gridStartY = tableY + 15;
-        const gridEndX = tableX + (tableWidth - 30) / 2;
-        const gridEndY = tableY + 15 + (tableHeight - 30);
-
-        for (let x = gridStartX; x <= gridEndX; x += gridSize) {
-            grid.beginPath();
-            grid.moveTo(x, gridStartY);
-            grid.lineTo(x, gridEndY);
-            grid.strokePath();
-        }
-        for (let y = gridStartY; y <= gridEndY; y += gridSize) {
-            grid.beginPath();
-            grid.moveTo(gridStartX, y);
-            grid.lineTo(gridEndX, y);
-            grid.strokePath();
-        }
-
-        // nogice mize
-        // const legWidth = 20;
-        // const legHeight = 150;
-        // this.add.rectangle(tableX - tableWidth / 2 + 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
-        // this.add.rectangle(tableX + tableWidth / 2 - 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
+        const labTable = new LabTable(this, tableX, tableY, tableWidth, tableHeight);
+        labTable.create();
 
         // okvir
         const panelWidth = 450;

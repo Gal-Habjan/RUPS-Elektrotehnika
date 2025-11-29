@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { LabTable } from '../componentsVisual/LabTable';
 
 export default class ScoreboardScene extends Phaser.Scene {
     constructor() {
@@ -26,41 +27,8 @@ export default class ScoreboardScene extends Phaser.Scene {
         this.add.rectangle(0, height - 150, width, 150, 0xd4c4a8).setOrigin(0);
 
         // miza
-        const tableX = width / 2;
-        const tableY = height / 2 + 50;
-        const tableWidth = 600;
-        const tableHeight = 280;
-
-        this.add.rectangle(tableX, tableY, tableWidth, 30, 0x8b4513).setOrigin(0.5);
-        const surface = this.add.rectangle(tableX, tableY + 15, tableWidth - 30, tableHeight - 30, 0xa0826d).setOrigin(0.5, 0);
-
-        // mreža
-        const grid = this.add.graphics();
-        grid.lineStyle(1, 0x8b7355, 0.3);
-        const gridSize = 30;
-        const gridStartX = tableX - (tableWidth - 30) / 2;
-        const gridStartY = tableY + 15;
-        const gridEndX = tableX + (tableWidth - 30) / 2;
-        const gridEndY = tableY + 15 + (tableHeight - 30);
-
-        for (let x = gridStartX; x <= gridEndX; x += gridSize) {
-            grid.beginPath();
-            grid.moveTo(x, gridStartY);
-            grid.lineTo(x, gridEndY);
-            grid.strokePath();
-        }
-        for (let y = gridStartY; y <= gridEndY; y += gridSize) {
-            grid.beginPath();
-            grid.moveTo(gridStartX, y);
-            grid.lineTo(gridEndX, y);
-            grid.strokePath();
-        }
-
-        // nogice mize
-        const legWidth = 20;
-        const legHeight = 150;
-        this.add.rectangle(tableX - tableWidth / 2 + 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
-        this.add.rectangle(tableX + tableWidth / 2 - 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
+        const labTable = new LabTable(this, width / 2, height / 2 + 50, 600, 280);
+        labTable.create();
 
         // okvir
         const panelWidth = 600;
