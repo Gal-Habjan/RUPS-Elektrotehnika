@@ -16,7 +16,10 @@ const config = {
   width: window.innerWidth,                    
   height: window.innerHeight,                   
   backgroundColor: '#f4f6fa',    
-  parent: 'game-container',      
+  parent: 'game-container',
+  dom: {
+    createContainer: true
+  },
   scene: [
     // uvoz scen
     MenuScene,

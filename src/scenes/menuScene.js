@@ -244,6 +244,7 @@ export default class MenuScene extends Phaser.Scene {
             }
         });
         this.startButtonBackground.on('pointerdown', () => {
+                this.input.setDefaultCursor('default');
             if (this.isSwitchOn) this.scene.start('LoginScene');
         }); 
 

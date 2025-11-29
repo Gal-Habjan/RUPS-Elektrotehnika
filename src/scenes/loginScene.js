@@ -54,71 +54,86 @@ export default class LoginScene extends Phaser.Scene {
         }
 
         // nogice mize
-        const legWidth = 20;
-        const legHeight = 150;
-        this.add.rectangle(tableX - tableWidth / 2 + 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
-        this.add.rectangle(tableX + tableWidth / 2 - 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
+        // const legWidth = 20;
+        // const legHeight = 150;
+        // this.add.rectangle(tableX - tableWidth / 2 + 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
+        // this.add.rectangle(tableX + tableWidth / 2 - 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
 
         // okvir
-        const panelWidth = 500;
-        const panelHeight = 340;
+        const panelWidth = 450;
+        const panelHeight = 380;
         const panelX = width / 2 - panelWidth / 2;
-        const panelY = height / 2 - panelHeight / 2 - 30;
+        const panelY = height / 2 - panelHeight / 2 - 200;
 
         const panel = this.add.graphics();
-        panel.fillStyle(0xffffff, 0.92);
-        panel.fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 25);
-        panel.lineStyle(3, 0xcccccc, 1);
-        panel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 25);
+        panel.fillStyle(0xffffff, 0.95);
+        panel.fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 20);
+        panel.lineStyle(2, 0xdddddd, 1);
+        panel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 20);
 
         // naslov
-        this.add.text(width / 2, panelY + 40, 'PRIJAVA', {
+        this.add.text(width / 2, panelY + 50, 'PRIJAVA', {
             fontFamily: 'Arial',
-            fontSize: '36px',
+            fontSize: '32px',
             fontStyle: 'bold',
-            color: '#222'
+            color: '#333'
         }).setOrigin(0.5);
 
-        // input polji
-        const inputWidth = 350;
-        const inputHeight = 45;
-        const corner = 10;
+        // Create RexUI text input fields
+        const createInput = (scene, x, y, placeholder, type = 'text') => {
+            const background = scene.add.graphics();
+            background.fillStyle(0xfafafa, 1);
+            background.lineStyle(2, 0xe0e0e0, 1);
+            background.fillRoundedRect(0, 0, 360, 50, 12);
+            background.strokeRoundedRect(0, 0, 360, 50, 12);
+            background.setPosition(x - 180, y - 25);
 
-        const username = document.createElement('input');
-        username.type = 'text';
-        username.placeholder = 'Uporabniško ime';
-        username.style.position = 'absolute';
-        username.style.lineHeight = `${inputHeight}px`;
-        username.style.width = `${inputWidth}px`;
-        username.style.height = `${inputHeight}px`;
-        username.style.left = `${width / 2 - inputWidth / 2}px`;
-        username.style.top = `${panelY + 100}px`;
-        username.style.borderRadius = '8px';
-        username.style.padding = '5px';
-        username.style.border = '1px solid #ccc';
-        username.style.textAlign = 'center';
-        username.style.fontSize = '18px';
-        username.style.outline = 'none';
-        username.style.backgroundColor = '#f9f9f9';
-        document.body.appendChild(username);
+            const textObject = scene.add.dom(x, y).createFromHTML(`
+                <div style="pointer-events: none;">
+                    <input type="${type}" 
+                           placeholder="${placeholder}"
+                           style="
+                               width: 360px;
+                               height: 50px;
+                               border: none;
+                               background: transparent;
+                               font-size: 16px;
+                               font-family: Arial;
+                               padding: 0 -30px;
+                               padding-left: 20px;
+                               outline: none;
+                               text-align: left;
+                               color: #333;
+                               cursor: text;
+                               pointer-events: auto;
+                           "
+                    />
+                </div>
+            `);
 
-        const password = document.createElement('input');
-        password.type = 'password';
-        password.placeholder = 'Geslo';
-        password.style.position = 'absolute';
-        password.style.lineHeight = `${inputHeight}px`;
-        password.style.width = `${inputWidth}px`;
-        password.style.height = `${inputHeight}px`;
-        password.style.left = `${width / 2 - inputWidth / 2}px`;
-        password.style.top = `${panelY + 160}px`;
-        password.style.borderRadius = '8px';
-        password.style.padding = '5px';
-        password.style.border = '1px solid #ccc';
-        password.style.textAlign = 'center';
-        password.style.fontSize = '18px';
-        password.style.outline = 'none';
-        password.style.backgroundColor = '#f9f9f9';
-        document.body.appendChild(password);
+            const inputElement = textObject.node.querySelector('input');
+            
+            inputElement.addEventListener('focus', () => {
+                background.clear();
+                background.fillStyle(0xffffff, 1);
+                background.lineStyle(2, 0x3399ff, 1);
+                background.fillRoundedRect(0, 0, 360, 50, 12);
+                background.strokeRoundedRect(0, 0, 360, 50, 12);
+            });
+            
+            inputElement.addEventListener('blur', () => {
+                background.clear();
+                background.fillStyle(0xfafafa, 1);
+                background.lineStyle(2, 0xe0e0e0, 1);
+                background.fillRoundedRect(0, 0, 360, 50, 12);
+                background.strokeRoundedRect(0, 0, 360, 50, 12);
+            });
+
+            return { dom: textObject, input: inputElement, background };
+        };
+
+        const usernameInput = createInput(this, width / 2, panelY + 125, 'Uporabniško ime', 'text');
+        const passwordInput = createInput(this, width / 2, panelY + 195, 'Geslo', 'password');
 
         // const profilePic = document.createElement('input');
         // profilePic.type = 'file';
@@ -131,10 +146,10 @@ export default class LoginScene extends Phaser.Scene {
 
         //console.log(profilePic);
 
-        const buttonWidth = 180;  
-        const buttonHeight = 45;  
-        const cornerRadius = 10;  
-        const buttonY = panelY + 270;
+        const buttonWidth = 200;  
+        const buttonHeight = 50;  
+        const cornerRadius = 12;  
+        const buttonY = panelY + 290;
         const rectX = width / 2;
 
         const loginButtonBg = this.add.graphics();
@@ -177,8 +192,8 @@ export default class LoginScene extends Phaser.Scene {
                 );
             })
             .on('pointerdown', () => {
-                const usernameTrim = username.value.trim();
-                const passwordTrim = password.value.trim();
+                const usernameTrim = usernameInput.input.value.trim();
+                const passwordTrim = passwordInput.input.value.trim();
                 const pfps = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11'];
                 const pfpKey = pfps[Math.floor(Math.random() * pfps.length)];
 
@@ -197,8 +212,8 @@ export default class LoginScene extends Phaser.Scene {
                     localStorage.setItem('username', usernameTrim);
                     localStorage.setItem('profilePic', pfpKey);
 
-                    username.remove();
-                    password.remove();
+                    usernameInput.dom.destroy();
+                    passwordInput.dom.destroy();
 
                     this.scene.start('LabScene');
                 } else {
@@ -208,8 +223,8 @@ export default class LoginScene extends Phaser.Scene {
 
         // počisti inpute ob izhodu
         this.events.once('shutdown', () => {
-            username.remove();
-            password.remove();
+            usernameInput.dom.destroy();
+            passwordInput.dom.destroy();
         });
 
         const backButton = this.add.text(40, 30, '↩ Nazaj v meni', {
@@ -224,8 +239,8 @@ export default class LoginScene extends Phaser.Scene {
             .on('pointerover', () => backButton.setStyle({ color: '#0044cc' }))
             .on('pointerout', () => backButton.setStyle({ color: '#0066ff' }))
             .on('pointerdown', () => {
-                username.remove();
-                password.remove();
+                usernameInput.dom.destroy();
+                passwordInput.dom.destroy();
                 this.scene.start('MenuScene');
             });
 
