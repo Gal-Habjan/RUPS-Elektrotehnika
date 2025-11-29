@@ -58,7 +58,7 @@ export default class MenuScene extends Phaser.Scene {
         this.switchButton = this.add.image(rectX, bottomWireY + switchOffsetY, 'switch-off')
             .setScale(0.7)
             .setOrigin(0.5)
-            .setInteractive({ 
+            .setInteractive({
                 useHandCursor: true,
                 pixelPerfect: true,
                 alphaTolerance: 128
@@ -72,7 +72,7 @@ export default class MenuScene extends Phaser.Scene {
         if (username) {
             this.scene.start('LabScene');
             return;
-        } 
+        }
 
         // komponente
         this.createComponents(width, height, rectX, rectY);
@@ -134,7 +134,7 @@ export default class MenuScene extends Phaser.Scene {
 
     showComponents() {
         this.tweens.killTweensOf([this.desk, this.gridGraphics, ...this.fixedComponents]);
-        
+
         this.tweens.add({ targets: this.desk, alpha: 1, duration: 800 });
         this.tweens.add({ targets: this.gridGraphics, alpha: 1, duration: 1200 });
 
@@ -150,8 +150,15 @@ export default class MenuScene extends Phaser.Scene {
 
     hideComponents() {
         this.tweens.killTweensOf([this.desk, this.gridGraphics, ...this.fixedComponents]);
-        
-        this.fixedComponents.forEach(img => img.setAlpha(0));
+
+        this.fixedComponents.forEach((img, i) => {
+            this.tweens.add({
+                targets: img,
+                alpha: 0,
+                duration: 400,
+                delay: i * 30
+            });
+        });
     }
 
     toggleSwitch() {
@@ -192,22 +199,22 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     createUI() {
-       const rectX = this.scale.width / 2;
+        const rectX = this.scale.width / 2;
         const rectY = this.scale.height / 2 - 50;
-        
+
         // vogali gumba
-        const cornerRadius = 15; 
-        const buttonWidth = 250; 
+        const cornerRadius = 15;
+        const buttonWidth = 250;
         const buttonHeight = 60;
-        
+
         // ozadje gumba
         this.startButtonBackground = this.add.graphics();
         this.startButtonBackground.fillStyle(0xdddddd, 1); // siva
         this.startButtonBackground.fillRoundedRect(
             rectX - buttonWidth / 2, // X zacetek
             (rectY + 100) - buttonHeight / 2, // Y zacetek
-            buttonWidth, 
-            buttonHeight, 
+            buttonWidth,
+            buttonHeight,
             cornerRadius // Polmer!
         );
         this.startButtonBackground.setDepth(10);
@@ -237,22 +244,23 @@ export default class MenuScene extends Phaser.Scene {
             }
         });
         this.startButtonBackground.on('pointerdown', () => {
+            this.input.setDefaultCursor('default');
             if (this.isSwitchOn) this.scene.start('LoginScene');
-        }); 
+        });
 
         // naslov
-        this.title = this.add.text(rectX, rectY, 'LABORATORIJ', { 
-            fontFamily: 'Arial', 
-            fontSize: '72px', 
-            fontStyle: 'bold', 
-            color: '#222222' 
+        this.title = this.add.text(rectX, rectY, 'LABORATORIJ', {
+            fontFamily: 'Arial',
+            fontSize: '72px',
+            fontStyle: 'bold',
+            color: '#222222'
         }).setOrigin(0.5);
 
         // gumb
         this.loginButton = this.add.text(rectX, rectY + 100, '▶ Začni igro', {
             fontFamily: 'Arial',
             fontSize: '32px',
-            color: '#aaaaaa', 
+            color: '#aaaaaa',
         })
             .setOrigin(0.5)
             .setDepth(11);
@@ -269,7 +277,7 @@ export default class MenuScene extends Phaser.Scene {
         });
     }
 
-enableStartButton(isActive) {
+    enableStartButton(isActive) {
         // zaobljen gumb
         const cornerRadius = 15;
         const buttonWidth = 250;
@@ -283,7 +291,7 @@ enableStartButton(isActive) {
             });
             // novo ozadje
             this.startButtonBackground.clear();
-            this.startButtonBackground.fillStyle(0x3399ff, 1); 
+            this.startButtonBackground.fillStyle(0x3399ff, 1);
             this.startButtonBackground.fillRoundedRect(rectX - buttonWidth / 2, (rectY + 100) - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
         } else {
             this.loginButton.setStyle({
