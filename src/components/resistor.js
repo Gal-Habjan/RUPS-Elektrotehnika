@@ -14,6 +14,30 @@ class Resistor extends Component {
         );
         this.ohm = ohm;
     }
+
+    calc_current() {
+        if (this.voltage !== 0 && this.ohm !== 0) {
+            this.current = this.voltage / this.ohm;
+        } else {
+            this.current = 0;
+        }
+    }
+
+    calc_resistance() {
+        if (this.current !== 0) {
+            this.ohm = this.voltage / this.current;
+        } else {
+            this.ohm = Infinity;
+        }
+    }
+
+    calc_voltage() {
+        this.voltage = this.current * this.ohm;
+    }   
+
+    calc_power() {
+        this.power = this.voltage * this.current;
+    }
 }
 
 export { Resistor };

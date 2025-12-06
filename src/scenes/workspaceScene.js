@@ -256,6 +256,17 @@ export default class WorkspaceScene extends Phaser.Scene {
       }
     });
 
+    new UIButton(this, {
+      x: width - 140,
+      y: 225,
+      text: 'Formule',
+      onClick: () => this.showCalculationFormulas(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
         // stranska vrstica na levi
         const panelWidth = 150;
         this.add.rectangle(0, 0, panelWidth, height, 0xc0c0c0).setOrigin(0);
@@ -558,6 +569,175 @@ export default class WorkspaceScene extends Phaser.Scene {
         // else {
         //   this.checkText.setText('Krog ni pravilen. Poskusi znova.');
         // }
+    }
+
+    showCalculationFormulas() {
+        // Create modal background
+        if (this.calculationModal) {
+            this.calculationModal.destroy();
+            this.calculationModal = null;
+            return;
+        }
+
+        const width = this.scale.width;
+        const height = this.scale.height;
+
+        this.calculationModal = this.add.container(0, 0);
+
+        // Semi-transparent background
+        const bg = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7);
+        bg.setInteractive();
+        bg.on('pointerdown', () => {
+            this.calculationModal.destroy();
+            this.calculationModal = null;
+        });
+
+        // Modal panel
+        const panelWidth = 700;
+        const panelHeight = 550;
+        const panel = this.add.rectangle(width / 2, height / 2, panelWidth, panelHeight, 0xffffff);
+        panel.setStrokeStyle(3, 0x333333);
+
+        // Title
+        const title = this.add.text(width / 2, height / 2 - panelHeight / 2 + 30, 'Formule za Izračune', {
+            fontSize: '28px',
+            fontStyle: 'bold',
+            color: '#333333'
+        });
+        title.setOrigin(0.5);
+
+        // Create scrollable content area
+        const contentX = width / 2 - panelWidth / 2 + 40;
+        const contentStartY = height / 2 - panelHeight / 2 + 80;
+        const contentAreaHeight = panelHeight - 150; // Space for title and close button
+        const lineHeight = 35;
+
+        // Create a container for scrollable content
+        const scrollContainer = this.add.container(0, 0);
+        let currentY = 0;
+
+        const formulas = [
+            { section: 'Ohmov zakon:', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
+            { text: 'U = I × R    (Napetost = Tok × Upor)', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'I = U / R     (Tok = Napetost / Upor)', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'R = U / I     (Upor = Napetost / Tok)', style: { fontSize: '16px', color: '#333333' } },
+            { text: '', style: {} },
+            
+            { section: 'Zaporedna vezava (serijska):', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
+            { text: 'R_skupni = R₁ + R₂ + R₃ + ...', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'I_skupni = I₁ = I₂ = I₃ = ... (enak tok)', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'U_skupni = U₁ + U₂ + U₃ + ...', style: { fontSize: '16px', color: '#333333' } },
+            { text: '', style: {} },
+            
+            { section: 'Vzporedna vezava (paralelna):', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
+            { text: '1/R_skupni = 1/R₁ + 1/R₂ + 1/R₃ + ...', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'U_skupni = U₁ = U₂ = U₃ = ...(enaka napetost)', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'I_skupni = I₁ + I₂ + I₃ + ...', style: { fontSize: '16px', color: '#333333' } },
+            { text: '', style: {} },
+            
+            { section: 'Moč:', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
+            { text: 'P = U × I    (Moč = Napetost × Tok)', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'P = I² × R   (Moč = Tok² × Upor)', style: { fontSize: '16px', color: '#333333' } },
+            { text: 'P = U² / R   (Moč = Napetost² / Upor)', style: { fontSize: '16px', color: '#333333' } }
+        ];
+
+        formulas.forEach((formula) => {
+            if (formula.section) {
+                const sectionText = this.add.text(0, currentY, formula.section, formula.style);
+                scrollContainer.add(sectionText);
+                currentY += lineHeight;
+            } else if (formula.text === '') {
+                currentY += 15;
+            } else {
+                const formulaText = this.add.text(20, currentY, formula.text, formula.style);
+                scrollContainer.add(formulaText);
+                currentY += lineHeight - 5;
+            }
+        });
+
+        const totalContentHeight = currentY;
+
+        // Set initial position of scroll container
+        scrollContainer.x = contentX;
+        scrollContainer.y = contentStartY;
+        
+        // Create mask for scrollable area
+        const maskShape = this.make.graphics();
+        maskShape.fillStyle(0xffffff);
+        maskShape.fillRect(
+            contentX,
+            contentStartY,
+            panelWidth - 80,
+            contentAreaHeight
+        );
+        const mask = maskShape.createGeometryMask();
+        scrollContainer.setMask(mask);
+        
+        let scrollOffset = 0;
+
+        // Scroll zone (invisible interactive area)
+        const scrollZone = this.add.rectangle(
+            width / 2,
+            contentStartY + contentAreaHeight / 2,
+            panelWidth - 40,
+            contentAreaHeight,
+            0xffffff,
+            0
+        );
+        scrollZone.setInteractive();
+
+        // Mouse wheel scrolling
+        scrollZone.on('wheel', (pointer, deltaX, deltaY) => {
+            scrollOffset += deltaY * 0.5;
+            const maxScroll = Math.max(0, totalContentHeight - contentAreaHeight);
+            scrollOffset = Phaser.Math.Clamp(scrollOffset, 0, maxScroll);
+            scrollContainer.y = contentStartY - scrollOffset;
+        });
+
+        // Drag scrolling
+        let isDragging = false;
+        let dragStartY = 0;
+        let dragStartScroll = 0;
+
+        scrollZone.on('pointerdown', (pointer) => {
+            isDragging = true;
+            dragStartY = pointer.y;
+            dragStartScroll = scrollOffset;
+        });
+
+        this.input.on('pointermove', (pointer) => {
+            if (isDragging) {
+                const deltaY = dragStartY - pointer.y;
+                scrollOffset = dragStartScroll + deltaY;
+                const maxScroll = Math.max(0, totalContentHeight - contentAreaHeight);
+                scrollOffset = Phaser.Math.Clamp(scrollOffset, 0, maxScroll);
+                scrollContainer.y = contentStartY - scrollOffset;
+            }
+        });
+
+        this.input.on('pointerup', () => {
+            isDragging = false;
+        });
+
+        // Close button
+        const closeButton = this.add.rectangle(width / 2, height / 2 + panelHeight / 2 - 30, 120, 40, 0x0066cc);
+        closeButton.setInteractive({ useHandCursor: true });
+        closeButton.on('pointerdown', () => {
+            this.calculationModal.destroy();
+            this.calculationModal = null;
+        });
+        closeButton.on('pointerover', () => closeButton.setFillStyle(0x0088ee));
+        closeButton.on('pointerout', () => closeButton.setFillStyle(0x0066cc));
+
+        const closeText = this.add.text(width / 2, height / 2 + panelHeight / 2 - 30, 'Zapri', {
+            fontSize: '18px',
+            fontStyle: 'bold',
+            color: '#ffffff'
+        });
+        closeText.setOrigin(0.5);
+
+        // Add all elements to container (note: maskShape should NOT be added to avoid covering text)
+        this.calculationModal.add([bg, panel, title, scrollContainer, scrollZone, closeButton, closeText]);
     }
 
     nextChallenge() {

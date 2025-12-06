@@ -1,4 +1,3 @@
-import { createNewComponent } from "../components/ComponentHelper.js";
 class CircuitSim {
     constructor() {
         this.source;
@@ -8,6 +7,19 @@ class CircuitSim {
     findSource() {
         this.source = window.components.find(c => c.type === 'battery');
         return this.source;
+    }
+
+    calc_voltage_consequent(nodes) {
+        // calculate voltages across components
+    }
+    calc_voltage_parallel(nodes) {
+        // calculate voltages across components
+    }
+    calc_current_consequent(nodes) {
+        // calculate currents through components
+    }
+    calc_current_parallel(nodes) {
+        // calculate currents through components
     }
 
     generate_tree() {
