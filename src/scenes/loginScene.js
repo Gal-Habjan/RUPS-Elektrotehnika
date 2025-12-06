@@ -120,92 +120,52 @@ export default class LoginScene extends Phaser.Scene {
 
         //console.log(profilePic);
 
-        const buttonWidth = 200;  
-        const buttonHeight = 50;  
-        const cornerRadius = 12;  
         const buttonY = panelY + 290;
         const rectX = width / 2;
 
-        const loginButtonBg = this.add.graphics();
-        loginButtonBg.fillStyle(0x3399ff, 1);
-        loginButtonBg.fillRoundedRect(
-            rectX - buttonWidth / 2,
-            buttonY - buttonHeight / 2,
-            buttonWidth,
-            buttonHeight,
-            cornerRadius
-        );
-        loginButtonBg.setDepth(10);
-        loginButtonBg.setInteractive(
-            new Phaser.Geom.Rectangle(
-                rectX - buttonWidth / 2,
-                buttonY - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight
-            ),
-            Phaser.Geom.Rectangle.Contains
-        );
-        loginButtonBg.on('pointerover', () => {
-            this.input.setDefaultCursor('pointer');
-            loginButtonBg.clear();
-            loginButtonBg.fillStyle(0x0f5cad, 1);
-            loginButtonBg.fillRoundedRect(
-                rectX - buttonWidth / 2,
-                buttonY - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight,
-                cornerRadius
-            );
-        });
-        loginButtonBg.on('pointerout', () => {
-            this.input.setDefaultCursor('default');
-            loginButtonBg.clear();
-            loginButtonBg.fillStyle(0x3399ff, 1);
-            loginButtonBg.fillRoundedRect(
-                rectX - buttonWidth / 2,
-                buttonY - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight,
-                cornerRadius
-            );
-        });
-        loginButtonBg.on('pointerdown', () => {
-            const usernameTrim = usernameInput.input.value.trim();
-            const passwordTrim = passwordInput.input.value.trim();
-            const pfps = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11'];
-            const pfpKey = pfps[Math.floor(Math.random() * pfps.length)];
+        new UIButton(this, {
+            x: rectX,
+            y: buttonY,
+            text: '▶ Prijavi se',
+            onClick: () => {
+                const usernameTrim = usernameInput.input.value.trim();
+                const passwordTrim = passwordInput.input.value.trim();
+                const pfps = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11'];
+                const pfpKey = pfps[Math.floor(Math.random() * pfps.length)];
 
-            if (usernameTrim && passwordTrim) {
-                const existingUser = users.find(u => u.username == usernameTrim);
-                if (existingUser) {
-                    if (existingUser.password !== passwordTrim) {
-                        alert('Napačno geslo!');
-                        return;
+                if (usernameTrim && passwordTrim) {
+                    const existingUser = users.find(u => u.username == usernameTrim);
+                    if (existingUser) {
+                        if (existingUser.password !== passwordTrim) {
+                            alert('Napačno geslo!');
+                            return;
+                        }
+                    } else {
+                        users.push({ username: usernameTrim, password: passwordTrim, score: 0, profilePic: pfpKey });
+                        localStorage.setItem('users', JSON.stringify(users));
                     }
+
+                    localStorage.setItem('username', usernameTrim);
+                    localStorage.setItem('profilePic', pfpKey);
+
+                    usernameInput.dom.destroy();
+                    passwordInput.dom.destroy();
+
+                    this.scene.start('LabScene');
                 } else {
-                    users.push({ username: usernameTrim, password: passwordTrim, score: 0, profilePic: pfpKey });
-                    localStorage.setItem('users', JSON.stringify(users));
+                    alert('Vnesi uporabniško ime in geslo!');
                 }
-
-                localStorage.setItem('username', usernameTrim);
-                localStorage.setItem('profilePic', pfpKey);
-
-                usernameInput.dom.destroy();
-                passwordInput.dom.destroy();
-
-                this.scene.start('LabScene');
-            } else {
-                alert('Vnesi uporabniško ime in geslo!');
-            }
+            },
+            style: {
+                fontSize: '24px'
+            },
+            background: {
+                width: 200,
+                height: 50,
+                cornerRadius: 12
+            },
+            depth: 11
         });
-
-        const loginButton = this.add.text(rectX, buttonY, '▶ Prijavi se', {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ffffff'
-        })
-            .setOrigin(0.5)
-            .setDepth(11);
 
         // počisti inpute ob izhodu
         this.events.once('shutdown', () => {
