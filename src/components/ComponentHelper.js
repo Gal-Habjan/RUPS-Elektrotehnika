@@ -217,6 +217,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             const comp = component.getData("logicComponent");
             comp.destroy();
             component.destroy();
+            window.components = window.components.filter(c => c !== component.getData("logicComponent"));
         } else if (!isInPanel && component.getData("isInPanel")) {
             // s strani na mizo
             const snapped = workspace.snapToGrid(component.x, component.y);
@@ -367,6 +368,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     // Add interactivity to start and end circles
     addCircleInteractivity(startCircle, "start");
     addCircleInteractivity(endCircle, "end");
+
+    return component;
 
     // hover efekt
     // component.on("pointerover", () => {

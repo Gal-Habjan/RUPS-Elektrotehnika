@@ -8,9 +8,11 @@ import { Node } from "../logic/node";
 import { Switch } from "../components/switch";
 import { Resistor } from "../components/resistor";
 import { createComponent } from "../components/ComponentHelper";
+import { CircuitSim } from "../logic/circuit_sim.js";
 export default class WorkspaceScene extends Phaser.Scene {
     constructor() {
         super("WorkspaceScene");
+        this.sim = new CircuitSim();
     }
 
     init() {
@@ -253,6 +255,7 @@ export default class WorkspaceScene extends Phaser.Scene {
             this.scene.start("ScoreboardScene", { cameFromMenu: false })
         );
         makeButton(width - 140, 125, "Preveri krog", () => this.checkCircuit());
+        makeButton(width - 140, 125, "Run sim", () => this.sim.run());
         makeButton(width - 140, 175, "Simulacija", () => {
             this.connected = this.graph.simulate();
             if (this.connected == 1) {
@@ -499,6 +502,9 @@ export default class WorkspaceScene extends Phaser.Scene {
             color,
             this.wireGraphics
         );
+        if (!window.components) window.components = [];
+        console.log("Created component:", component);
+        window.components.push(component.getData("logicComponent"));
     }
 
     checkCircuit() {
