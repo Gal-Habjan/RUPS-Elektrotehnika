@@ -153,7 +153,7 @@ export default class LabScene extends Phaser.Scene {
             scoreButtonBg.fillRoundedRect(width - buttonWidth - rightMargin, topMargin, buttonWidth, buttonHeight, cornerRadius);
         })
         .on('pointerdown', () => {
-            this.scene.start('ScoreboardScene', {cameFromMenu: true});
+            this.scene.start('ScoreboardScene', { cameFromScene: 'LabScene' });
         });
 
     // this.input.keyboard.on('keydown-ESC', () => {

@@ -160,7 +160,7 @@ export default class WorkspaceScene extends Phaser.Scene {
       return { bg, text };
     };
 
-    makeButton(width - 140, 75, 'Lestvica', () => this.scene.start('ScoreboardScene', { cameFromMenu: false }));
+    makeButton(width - 140, 75, 'Lestvica', () => this.scene.start('ScoreboardScene', { cameFromScene: 'WorkspaceScene' }));
     makeButton(width - 140, 125, 'Preveri krog', () => this.checkCircuit());
     makeButton(width - 140, 175, 'Simulacija', () => {
       this.connected = this.graph.simulate()
