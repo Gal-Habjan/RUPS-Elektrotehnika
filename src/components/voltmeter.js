@@ -3,6 +3,9 @@ import { Component } from "./component.js";
 import { ComponentDirection } from "./ComponentDirection.js";
 
 class Voltmeter extends Component {
+    static count = 0;
+    static prefix = "V";
+
     constructor(id, start, end, componentObject = null) {
         super(
             id,

@@ -25,6 +25,44 @@ class Component {
         this.debug_color = 0xff0000;
         this.direction = direction;
         this.componentObject = componentObject;
+
+        //ui
+        this.properties = {
+            fields: [
+                { label: "Name", type: "text", key: "name" },
+                {
+                    label: "Resistance (Ω)",
+                    type: "number",
+                    key: "resistance",
+                    automatic: true,
+                },
+                {
+                    label: "Voltage Drop (V)",
+                    type: "number",
+                    key: "voltageDrop",
+                    automatic: true,
+                },
+                {
+                    label: "Current (A)",
+                    type: "number",
+                    key: "current",
+                    automatic: true,
+                },
+                {
+                    label: "Power (W)",
+                    type: "number",
+                    key: "power",
+                    automatic: true,
+                },
+            ],
+        };
+        this.values = {
+            name: "",
+            voltageDrop: { value: 0, automatic: false },
+            current: { value: 0, automatic: false },
+            power: { value: 0, automatic: false },
+            resistance: { value: 0, automatic: false },
+        };
     }
 
     updateMove(workspace, rotate = false) {
@@ -38,6 +76,7 @@ class Component {
         if (this.start) this.start.destroyNode();
         if (this.end) this.end.destroyNode();
     }
+
     updateLogicNodePositions(workspace, rotate) {
         const comp = this.componentObject.getData("logicComponent");
         if (!comp) return;

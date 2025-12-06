@@ -1,6 +1,9 @@
 import { Component } from "./component";
 import { ComponentDirection } from "./ComponentDirection.js";
 class Resistor extends Component {
+    static count = 0;
+    static prefix = "R";
+
     constructor(id, start, end, ohm, obj) {
         super(
             id,
@@ -13,6 +16,9 @@ class Resistor extends Component {
             false
         );
         this.ohm = ohm;
+        this.values.resistance.value = 100;
+        Resistor.count += 1;
+        this.values.name = Resistor.prefix + Resistor.count;
     }
 }
 

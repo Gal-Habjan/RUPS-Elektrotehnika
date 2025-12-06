@@ -9,6 +9,7 @@ import { Switch } from "../components/switch";
 import { Resistor } from "../components/resistor";
 import { ComponentDirection } from "./ComponentDirection.js";
 import { createContextMenu } from "../ui/ContextMenu.js";
+import { openPropertiesPanel } from "../ui/PropertiesPanel.js";
 export function createComponent(workspace, x, y, type, color, wireGraphics) {
     const component = workspace.add.container(x, y);
 
@@ -230,7 +231,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
         })
         .setOrigin(0.5);
     component.add(label);
-
+    component.setData("displayLabel", label);
     component.setSize(70, 70);
     component.setInteractive({ draggable: true, useHandCursor: true });
 
@@ -283,6 +284,27 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
 
             component.setData("isRotated", false);
             component.setData("isInPanel", false);
+
+            // assign a display name based on the component class static counter
+            if (comp && comp.constructor) {
+                // update the label that was created for this visual component
+                if (
+                    typeof label !== "undefined" &&
+                    label &&
+                    typeof label.setText === "function"
+                ) {
+                    try {
+                        label.setText(comp.values.name);
+                    } catch (e) {
+                        console.warn("Failed to set label text", e);
+                    }
+                } else {
+                    console.warn(
+                        "Label not found or not editable for component",
+                        comp.id
+                    );
+                }
+            }
 
             workspace.createNewComponent(
                 component.getData("originalX"),
@@ -432,26 +454,92 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
 export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
     const items = [
         {
-            label: "change value",
+            label: "Properties",
             onClick: () => {
                 console.log("changeValue");
                 const logicComp = compObj.getData("logicComponent");
-                const current =
-                    logicComp &&
-                    (logicComp.value ||
-                        logicComp.voltage ||
-                        logicComp.resistance ||
-                        "");
-                const input = window.prompt("Enter new value:", current);
-                if (input !== null && logicComp) {
-                    const num = parseFloat(input);
-                    if (!isNaN(num)) {
-                        if ("voltage" in logicComp) logicComp.voltage = num;
-                        else if ("resistance" in logicComp)
-                            logicComp.resistance = num;
-                        else logicComp.value = num;
+                const compType =
+                    compObj.getData("type") ||
+                    (logicComp && logicComp.type) ||
+                    "";
+
+                // Build fields based on component type
+
+                // const initialValues = {};
+
+                // switch (compType) {
+                //     case "battery":
+                //     case "baterija":
+                //         fields.push({
+                //             key: "voltage",
+                //             label: "Voltage (V)",
+                //             type: "number",
+                //             default:
+                //                 logicComp && logicComp.voltage
+                //                     ? logicComp.voltage
+                //                     : 3.3,
+                //         });
+                //         fields.push({
+                //             key: "sourceType",
+                //             label: "Source",
+                //             type: "radio",
+                //             options: ["DC", "AC"],
+                //             default: logicComp && logicComp.isAC ? "AC" : "DC",
+                //         });
+                //         initialValues.voltage =
+                //             logicComp &&
+                //             typeof logicComp.voltage !== "undefined"
+                //                 ? logicComp.voltage
+                //                 : null;
+                //         initialValues.sourceType =
+                //             logicComp && logicComp.isAC ? "AC" : "DC";
+                //         break;
+                //     case "resistor":
+                //     case "upor":
+                //         fields.push({
+                //             key: "resistance",
+                //             label: "Resistance (Ω)",
+                //             type: "number",
+                //             default:
+                //                 logicComp && logicComp.resistance
+                //                     ? logicComp.resistance
+                //                     : null,
+                //         });
+                //         initialValues.resistance =
+                //             logicComp &&
+                //             typeof logicComp.resistance !== "undefined"
+                //                 ? logicComp.resistance
+                //                 : null;
+                //         break;
+                //     default:
+                //         // Generic name field for other components
+                //         fields.push({
+                //             key: "name",
+                //             label: "Name",
+                //             type: "text",
+                //             default: compObj.getData("displayName") || "",
+                //         });
+                //         initialValues.name =
+                //             compObj.getData("displayName") || "";
+                // }
+
+                let properties = logicComp.properties;
+                console.log("PROPERTIES |", properties);
+                openPropertiesPanel(
+                    workspace,
+
+                    properties.fields,
+                    logicComp.values,
+                    (values) => {
+                        const label = compObj.getData("displayLabel");
+                        label.setText(values.name);
+                        logicComp.values = values;
+                    },
+                    () => {
+                        // cancelled
+                        console.log("Properties cancelled");
                     }
-                }
+                );
             },
         },
         {

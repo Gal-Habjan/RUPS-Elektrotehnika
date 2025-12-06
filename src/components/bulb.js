@@ -2,6 +2,9 @@ import { Component } from "./component.js";
 import { ComponentDirection } from "./ComponentDirection.js";
 
 class Bulb extends Component {
+    static count = 0;
+    static prefix = "L"; // lamp
+
     constructor(id, start, end, componentObject = null) {
         super(
             id,
