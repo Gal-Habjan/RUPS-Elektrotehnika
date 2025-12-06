@@ -1,10 +1,19 @@
 import { Component } from "./component";
-
-class Resistor extends Component{
-    constructor(id, start, end, ohm) {
-        super(id, 'resistor', start, end, 'src/components/resistor.png', true);
-        this.ohm = ohm
+import { ComponentDirection } from "./ComponentDirection.js";
+class Resistor extends Component {
+    constructor(id, start, end, ohm, obj) {
+        super(
+            id,
+            "resistor",
+            start,
+            end,
+            "src/components/resistor.png",
+            obj,
+            ComponentDirection.HORIZONTAL,
+            false
+        );
+        this.ohm = ohm;
     }
 }
 
-export {Resistor}
+export { Resistor };
