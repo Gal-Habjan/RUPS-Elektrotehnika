@@ -154,7 +154,9 @@ class Wire {
             startPosition,
             endPosition,
             directionsStart,
-            directionsEnd
+            directionsEnd,
+            start.component && start.component.direction,
+            end.component && end.component.direction
         );
         path.unshift(startPosition);
         path.push(endPosition);
@@ -177,7 +179,7 @@ class Wire {
         return path;
     }
 
-    getPath(start, end, directionsStart, directionsEnd) {
+    getPath(start, end, directionsStart, directionsEnd, startDir, endDir) {
         let path = [];
         // console.log("Calculating path from", start, "to", end);
         // console.log(
@@ -221,103 +223,195 @@ class Wire {
             path.push({ x: end.x, y: end.y + 40 });
             return path;
         }
-        for (const dir of directionsStart) {
-            if (dir == "LEFT" || dir == "RIGHT") {
-                let finalMidPoint = { x: (start.x + end.x) / 2, y: end.y };
-                if (
-                    (finalMidPoint.x > end.x &&
-                        directionsEnd.includes("RIGHT")) ||
-                    (finalMidPoint.x < end.x && directionsEnd.includes("LEFT"))
-                ) {
-                    path.push({ x: (start.x + end.x) / 2, y: start.y });
-                    path.push(finalMidPoint);
-                    // console.log("2 snaps horizontal");
-                    return path;
-                }
+        // helper: order directions based on component orientation
+        const orderedDirections = (dirs, dirHint) => {
+            if (!Array.isArray(dirs)) return [];
+            if (dirHint === ComponentDirection.HORIZONTAL) {
+                const out = [];
+                ["LEFT", "RIGHT", "UP", "DOWN"].forEach((d) => {
+                    if (dirs.includes(d)) out.push(d);
+                });
+                return out;
             }
+            if (dirHint === ComponentDirection.VERTICAL) {
+                const out = [];
+                ["UP", "DOWN", "LEFT", "RIGHT"].forEach((d) => {
+                    if (dirs.includes(d)) out.push(d);
+                });
+                return out;
+            }
+            return dirs.slice();
+        };
 
-            if (dir == "UP" || dir == "DOWN") {
-                let finalMidPoint = { x: end.x, y: (start.y + end.y) / 2 };
-                if (
-                    (finalMidPoint.y < end.y && directionsEnd.includes("UP")) ||
-                    (finalMidPoint.y > end.y && directionsEnd.includes("DOWN"))
-                ) {
-                    path.push({ x: start.x, y: (start.y + end.y) / 2 });
-                    path.push(finalMidPoint);
-                    // console.log("2 snaps vertical");
-                    return path;
+        // helper: try to compute a two-step (two snaps) path
+        const tryTwoStep = () => {
+            const dirsToCheck = orderedDirections(directionsStart, startDir);
+            for (const dir of dirsToCheck) {
+                if (dir == "LEFT" || dir == "RIGHT") {
+                    let finalMidPoint = { x: (start.x + end.x) / 2, y: end.y };
+                    if (
+                        (finalMidPoint.x > end.x &&
+                            directionsEnd.includes("RIGHT")) ||
+                        (finalMidPoint.x < end.x &&
+                            directionsEnd.includes("LEFT"))
+                    ) {
+                        return [
+                            { x: (start.x + end.x) / 2, y: start.y },
+                            finalMidPoint,
+                        ];
+                    }
                 }
-            }
-        }
-        for (const dir of directionsStart) {
-            if (dir == "UP" || dir == "DOWN") {
-                if (
-                    (start.x > end.x && directionsEnd.includes("RIGHT")) ||
-                    (start.x < end.x && directionsEnd.includes("LEFT"))
-                ) {
-                    path.push({ x: start.x, y: end.y });
-                    // console.log("1 snap vertical");
-                    return path;
-                }
-            }
 
-            if (dir == "LEFT" || dir == "RIGHT") {
-                if (
-                    (start.y < end.y && directionsEnd.includes("DOWN")) ||
-                    (start.y > end.y && directionsEnd.includes("UP"))
-                ) {
-                    path.push({ x: end.x, y: start.y });
-                    // console.log("1 snap horizontal");
-                    return path;
+                if (dir == "UP" || dir == "DOWN") {
+                    let finalMidPoint = { x: end.x, y: (start.y + end.y) / 2 };
+                    if (
+                        (finalMidPoint.y < end.y &&
+                            directionsEnd.includes("UP")) ||
+                        (finalMidPoint.y > end.y &&
+                            directionsEnd.includes("DOWN"))
+                    ) {
+                        return [
+                            { x: start.x, y: (start.y + end.y) / 2 },
+                            finalMidPoint,
+                        ];
+                    }
                 }
             }
+            return null;
+        };
+
+        // helper: try to compute a one-step (single snap) path
+        const tryOneStep = () => {
+            const dirsToCheck = orderedDirections(directionsStart, startDir);
+            for (const dir of dirsToCheck) {
+                if (dir == "UP" || dir == "DOWN") {
+                    if (
+                        (start.x > end.x && directionsEnd.includes("RIGHT")) ||
+                        (start.x < end.x && directionsEnd.includes("LEFT"))
+                    ) {
+                        return [{ x: start.x, y: end.y }];
+                    }
+                }
+
+                if (dir == "LEFT" || dir == "RIGHT") {
+                    console.log("CHECKED");
+                    if (
+                        (start.y < end.y && directionsEnd.includes("UP")) ||
+                        (start.y > end.y && directionsEnd.includes("DOWN"))
+                    ) {
+                        console.log("DONE");
+                        return [{ x: end.x, y: start.y }];
+                    }
+                }
+            }
+            return null;
+        };
+
+        // Determine check order: if component directions are provided and differ,
+        // prefer one-step first, then two-step. Otherwise prefer two-step first.
+        let result = null;
+        if (typeof startDir !== "undefined" && typeof endDir !== "undefined") {
+            if (startDir !== endDir) {
+                result = tryOneStep() || tryTwoStep();
+            } else {
+                result = tryTwoStep() || tryOneStep();
+            }
+        } else {
+            // fallback: prefer two-step then one-step (legacy behavior)
+            result = tryTwoStep() || tryOneStep();
         }
+
+        if (result) return result;
 
         console.error("error no path found");
         return path;
     }
-    getMiddlePath(start, end, directionsStart) {
+    getMiddlePath(start, end, directionsStart, endDir) {
         let path = [];
-        // directionsStart = directionsStart.slice().reverse();
-        if (start.x == end.x) {
-            if (
-                (directionsStart.includes("UP") && start.y >= end.y) ||
-                (directionsStart.includes("DOWN") && start.y <= end.y)
-            ) {
-                // console.log("same x axis looking towards each other");
-                return path;
-            }
 
-            path.push({ x: start.x + 40, y: start.y });
-            path.push({ x: end.x + 40, y: end.y });
-            return path;
-        }
-        if (start.y == end.y) {
-            if (
-                (directionsStart.includes("LEFT") && start.x > end.x) ||
-                (directionsStart.includes("RIGHT") && start.x < end.x)
-            ) {
-                // console.log("same y axis looking towards each other");
-                return path;
+        const sameAxisFallback = () => {
+            if (start.x == end.x) {
+                if (
+                    (directionsStart.includes("UP") && start.y >= end.y) ||
+                    (directionsStart.includes("DOWN") && start.y <= end.y)
+                ) {
+                    return null;
+                }
+                return [
+                    { x: start.x + 40, y: start.y },
+                    { x: end.x + 40, y: end.y },
+                ];
             }
-            path.push({ x: start.x, y: start.y + 40 });
-            path.push({ x: end.x, y: end.y + 40 });
-            return path;
+            if (start.y == end.y) {
+                if (
+                    (directionsStart.includes("LEFT") && start.x > end.x) ||
+                    (directionsStart.includes("RIGHT") && start.x < end.x)
+                ) {
+                    return null;
+                }
+                return [
+                    { x: start.x, y: start.y + 40 },
+                    { x: end.x, y: end.y + 40 },
+                ];
+            }
+            return null;
+        };
+
+        const tryOneStep = () => {
+            for (const dir of directionsStart) {
+                if (dir == "UP" || dir == "DOWN") {
+                    return [{ x: start.x, y: end.y }];
+                }
+                if (dir == "LEFT" || dir == "RIGHT") {
+                    return [{ x: end.x, y: start.y }];
+                }
+            }
+            return null;
+        };
+
+        const tryTwoStep = () => {
+            // best-effort two-step for middle path when we don't have end directions
+            for (const dir of directionsStart) {
+                if (dir == "LEFT" || dir == "RIGHT") {
+                    let finalMidPoint = { x: (start.x + end.x) / 2, y: end.y };
+                    return [
+                        { x: (start.x + end.x) / 2, y: start.y },
+                        finalMidPoint,
+                    ];
+                }
+                if (dir == "UP" || dir == "DOWN") {
+                    let finalMidPoint = { x: end.x, y: (start.y + end.y) / 2 };
+                    return [
+                        { x: start.x, y: (start.y + end.y) / 2 },
+                        finalMidPoint,
+                    ];
+                }
+            }
+            return null;
+        };
+
+        // Try same-axis shortcuts first
+        const same = sameAxisFallback();
+        if (same) return same;
+
+        // If both component directions are known, prefer one-step when directions differ
+        let result = null;
+        if (
+            typeof endDir !== "undefined" &&
+            start.component &&
+            start.component.direction !== undefined
+        ) {
+            if (start.component.direction !== endDir) {
+                result = tryOneStep() || tryTwoStep();
+            } else {
+                result = tryTwoStep() || tryOneStep();
+            }
+        } else {
+            // fallback: try one-step then two-step
+            result = tryOneStep() || tryTwoStep();
         }
 
-        for (const dir of directionsStart) {
-            if (dir == "UP" || dir == "DOWN") {
-                path.push({ x: start.x, y: end.y });
-                // console.log("1 snap vertical");
-                return path;
-            }
-
-            if (dir == "LEFT" || dir == "RIGHT") {
-                path.push({ x: end.x, y: start.y });
-                // console.log("1 snap horizontal");
-                return path;
-            }
-        }
+        if (result) return result;
 
         console.error("error no path found");
         return path;
