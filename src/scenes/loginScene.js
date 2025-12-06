@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { LabTable } from '../componentsVisual/LabTable';
 import UIButton from '../ui/UIButton';
+import bcrypt from 'bcryptjs';
 
 export default class LoginScene extends Phaser.Scene {
     constructor() {
@@ -136,12 +137,16 @@ export default class LoginScene extends Phaser.Scene {
                 if (usernameTrim && passwordTrim) {
                     const existingUser = users.find(u => u.username == usernameTrim);
                     if (existingUser) {
-                        if (existingUser.password !== passwordTrim) {
+                        // Compare the entered password with stored hash using bcrypt
+                        const isPasswordCorrect = bcrypt.compareSync(passwordTrim, existingUser.password);
+                        if (!isPasswordCorrect) {
                             alert('Napačno geslo!');
                             return;
                         }
                     } else {
-                        users.push({ username: usernameTrim, password: passwordTrim, score: 0, profilePic: pfpKey });
+                        // Hash the password with bcrypt before storing (salt rounds: 10)
+                        const hashedPassword = bcrypt.hashSync(passwordTrim, 10);
+                        users.push({ username: usernameTrim, password: hashedPassword, score: 0, profilePic: pfpKey });
                         localStorage.setItem('users', JSON.stringify(users));
                     }
 
