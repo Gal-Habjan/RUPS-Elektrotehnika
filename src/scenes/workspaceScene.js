@@ -7,6 +7,7 @@ import { CircuitGraph } from '../logic/circuit_graph';
 import { Node } from '../logic/node';
 import { Switch } from '../components/switch';
 import { Resistor } from '../components/resistor';
+import UIButton from '../ui/UIButton';
 
 export default class WorkspaceScene extends Phaser.Scene {
   constructor() {
@@ -130,57 +131,57 @@ export default class WorkspaceScene extends Phaser.Scene {
       padding: { x: 15, y: 8 }
     }).setOrigin(0.5);
 
-    const buttonWidth = 180;
-    const buttonHeight = 45;
-    const cornerRadius = 10;
-
-    const makeButton = (x, y, label, onClick) => {
-      const bg = this.add.graphics();
-      bg.fillStyle(0x3399ff, 1);
-      bg.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
-
-      const text = this.add.text(x, y, label, {
-        fontFamily: 'Arial',
-        fontSize: '20px',
-        color: '#ffffff'
-      }).setOrigin(0.5)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerover', () => {
-          bg.clear();
-          bg.fillStyle(0x0f5cad, 1);
-          bg.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
-        })
-        .on('pointerout', () => {
-          bg.clear();
-          bg.fillStyle(0x3399ff, 1);
-          bg.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, cornerRadius);
-        })
-        .on('pointerdown', onClick);
-
-      return { bg, text };
-    };
-
-    makeButton(width - 140, 75, 'Lestvica', () => this.scene.start('ScoreboardScene', { cameFromScene: 'WorkspaceScene' }));
-    makeButton(width - 140, 125, 'Preveri krog', () => this.checkCircuit());
-    makeButton(width - 140, 175, 'Simulacija', () => {
-      this.connected = this.graph.simulate()
-      if (this.connected == 1) {
-        this.checkText.setStyle({ color: '#00aa00' });
-        this.checkText.setText('Električni tok je sklenjen');
-        this.sim = true;
-        return;
+    // Action buttons
+    new UIButton(this, {
+      x: width - 140,
+      y: 75,
+      text: 'Lestvica',
+      onClick: () => this.scene.start('ScoreboardScene', { cameFromScene: 'WorkspaceScene' }),
+      background: {
+        width: 180,
+        height: 45
       }
-      this.checkText.setStyle({ color: '#cc0000' });
-      if (this.connected == -1) {
-        this.checkText.setText('Manjka ti baterija');
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 125,
+      text: 'Preveri krog',
+      onClick: () => this.checkCircuit(),
+      background: {
+        width: 180,
+        height: 45
       }
-      else if (this.connected == -2) {
-        this.checkText.setText('Stikalo je izklopljeno');
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 175,
+      text: 'Simulacija',
+      onClick: () => {
+        this.connected = this.graph.simulate()
+        if (this.connected == 1) {
+          this.checkText.setStyle({ color: '#00aa00' });
+          this.checkText.setText('Električni tok je sklenjen');
+          this.sim = true;
+          return;
+        }
+        this.checkText.setStyle({ color: '#cc0000' });
+        if (this.connected == -1) {
+          this.checkText.setText('Manjka ti baterija');
+        }
+        else if (this.connected == -2) {
+          this.checkText.setText('Stikalo je izklopljeno');
+        }
+        else if (this.connected == 0) {
+          this.checkText.setText('Električni tok ni sklenjen');
+        }
+        this.sim = false;
+      },
+      background: {
+        width: 180,
+        height: 45
       }
-      else if (this.connected == 0) {
-        this.checkText.setText('Električni tok ni sklenjen');
-      }
-      this.sim = false;
     });
 
     // stranska vrstica na levi
@@ -204,22 +205,26 @@ export default class WorkspaceScene extends Phaser.Scene {
     this.createComponent(panelWidth / 2, 580, 'ampermeter', 0x00cc66);
     this.createComponent(panelWidth / 2, 660, 'voltmeter', 0x00cc66);
 
-    const backButton = this.add.text(12, 10, '↩ Nazaj', {
-      fontFamily: 'Arial',
-      fontSize: '20px',
-      color: '#387affff',
-      padding: { x: 20, y: 10 }
-    })
-      .setOrigin(0, 0)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerover', () => backButton.setStyle({ color: '#0054fdff' }))
-      .on('pointerout', () => backButton.setStyle({ color: '#387affff' }))
-      .on('pointerdown', () => {
+    new UIButton(this, {
+      x: 12,
+      y: 10,
+      text: '↩ Nazaj',
+      onClick: () => {
         this.cameras.main.fade(300, 0, 0, 0);
         this.time.delayedCall(300, () => {
           this.scene.start('LabScene');
         });
-      });
+      },
+      origin: [0, 0],
+      style: {
+        fontSize: '20px',
+        color: '#387affff',
+        padding: { x: 20, y: 10 }
+      },
+      hover: {
+        color: '#0054fdff'
+      }
+    });
 
     this.add.text(width / 2 + 50, 30, 'Povleci komponente na mizo in zgradi svoj električni krog!', {
       fontSize: '20px',
@@ -736,23 +741,27 @@ export default class WorkspaceScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(11);
 
-    this.continueButton = this.add.text(width / 2, height / 2 + 70, 'Nadaljuj', {
-      fontSize: '18px',
-      color: '#0066ff',
-      backgroundColor: '#ffffff',
-      padding: { x: 20, y: 10 }
-    })
-      .setOrigin(0.5)
-      .setDepth(11)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerover', () => this.continueButton.setStyle({ color: '#0044cc' }))
-      .on('pointerout', () => this.continueButton.setStyle({ color: '#0066ff' }))
-      .on('pointerdown', () => {
+    this.continueButton = new UIButton(this, {
+      x: width / 2,
+      y: height / 2 + 70,
+      text: 'Nadaljuj',
+      onClick: () => {
         this.hideTheory();
         this.placedComponents.forEach(comp => comp.destroy());
         this.placedComponents = [];
         this.nextChallenge();
-      });
+      },
+      style: {
+        fontSize: '18px',
+        color: '#0066ff',
+        backgroundColor: '#ffffff',
+        padding: { x: 20, y: 10 }
+      },
+      hover: {
+        color: '#0044cc'
+      },
+      depth: 11
+    });
 
 
   }

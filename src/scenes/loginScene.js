@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { LabTable } from '../componentsVisual/LabTable';
+import UIButton from '../ui/UIButton';
 
 export default class LoginScene extends Phaser.Scene {
     constructor() {
@@ -212,22 +213,25 @@ export default class LoginScene extends Phaser.Scene {
             passwordInput.dom.destroy();
         });
 
-        const backButton = this.add.text(40, 30, '↩ Nazaj v meni', {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0066ff',
-            // backgroundColor: '#e1e9ff',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0, 0) // levo zgoraj
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ color: '#0044cc' }))
-            .on('pointerout', () => backButton.setStyle({ color: '#0066ff' }))
-            .on('pointerdown', () => {
+        new UIButton(this, {
+            x: 40,
+            y: 30,
+            text: '↩ Nazaj v meni',
+            onClick: () => {
                 usernameInput.dom.destroy();
                 passwordInput.dom.destroy();
                 this.scene.start('MenuScene');
-            });
+            },
+            origin: [0, 0],
+            style: {
+                fontSize: '20px',
+                color: '#0066ff',
+                padding: { x: 20, y: 10 }
+            },
+            hover: {
+                color: '#0044cc'
+            }
+        });
 
         //localStorage.clear();
 

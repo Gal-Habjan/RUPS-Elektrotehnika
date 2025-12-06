@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { LabTable } from '../componentsVisual/LabTable';
+import UIButton from '../ui/UIButton';
 
 export default class ScoreboardScene extends Phaser.Scene {
     constructor() {
@@ -96,19 +97,22 @@ export default class ScoreboardScene extends Phaser.Scene {
         });
 
         // gumb
-        const backButton = this.add.text(width / 2, panelY + panelHeight - 40, '↩ Nazaj', {
-            fontFamily: 'Arial',
-            fontSize: '22px',
-            color: '#0066ff',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ color: '#0044cc' }))
-            .on('pointerout', () => backButton.setStyle({ color: '#0066ff' }))
-            .on('pointerdown', () => {
+        new UIButton(this, {
+            x: width / 2,
+            y: panelY + panelHeight - 40,
+            text: '↩ Nazaj',
+            onClick: () => {
                 this.scene.start(this.cameFromScene);
-            });
+            },
+            style: {
+                fontSize: '22px',
+                color: '#0066ff',
+                padding: { x: 20, y: 10 }
+            },
+            hover: {
+                color: '#0044cc'
+            }
+        });
 
     }
 }
