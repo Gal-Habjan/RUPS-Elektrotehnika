@@ -103,20 +103,34 @@ export default class Oscilloscope {
         this.displayText.setOrigin(0.5);
         this.container.add(this.displayText);
         
-        // Title label
-        const title = this.scene.add.text(
-            0,
-            -this.height / 2 - 20,
-            'OSCILLOSCOPE',
-            {
-                fontSize: '12px',
-                color: '#cccccc',
-                fontFamily: 'Arial',
-                fontStyle: 'bold'
+        // Make the oscilloscope draggable
+        this.setupDragging();
+    }
+    
+    setupDragging() {
+        // Make the container interactive
+        this.container.setSize(this.width, this.height);
+        this.container.setInteractive({ draggable: true, useHandCursor: true });
+        
+        // Add drag events
+        this.container.on('drag', (pointer, dragX, dragY) => {
+            this.container.x = dragX;
+            this.container.y = dragY;
+        });
+        
+        this.container.on('dragstart', () => {
+            // Bring to front when dragging starts
+            if (this.depth !== undefined) {
+                this.container.setDepth(this.depth + 1000);
             }
-        );
-        title.setOrigin(0.5);
-        this.container.add(title);
+        });
+        
+        this.container.on('dragend', () => {
+            // Reset depth when dragging ends
+            if (this.depth !== undefined) {
+                this.container.setDepth(this.depth);
+            }
+        });
     }
     
     drawGrid(x, y, width, height) {
