@@ -1,12 +1,14 @@
-import Phaser from "phaser";
-import LabScene from "./labScene";
-import { Battery } from "../components/battery";
-import { Bulb } from "../components/bulb";
-import { Wire } from "../components/wire";
-import { CircuitGraph } from "../logic/circuit_graph";
-import { Node } from "../logic/node";
-import { Switch } from "../components/switch";
-import { Resistor } from "../components/resistor";
+import Phaser from 'phaser';
+import LabScene from './labScene';
+import { Battery } from '../components/battery';
+import { Bulb } from '../components/bulb';
+import { Wire } from '../components/wire';
+import { CircuitGraph } from '../logic/circuit_graph';
+import { Node } from '../logic/node';
+import { Switch } from '../components/switch';
+import { Resistor } from '../components/resistor';
+import UIButton from '../ui/UIButton';
+import Oscilloscope from '../ui/Oscilloscope';
 import { createComponent } from "../components/ComponentHelper";
 import { CircuitSim } from "../logic/circuit_sim.js";
 export default class WorkspaceScene extends Phaser.Scene {
@@ -201,79 +203,58 @@ export default class WorkspaceScene extends Phaser.Scene {
             })
             .setOrigin(0.5);
 
-        const buttonWidth = 180;
-        const buttonHeight = 45;
-        const cornerRadius = 10;
+    // Action buttons
+    new UIButton(this, {
+      x: width - 140,
+      y: 75,
+      text: 'Lestvica',
+      onClick: () => this.scene.start('ScoreboardScene', { cameFromScene: 'WorkspaceScene' }),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
 
-        const makeButton = (x, y, label, onClick) => {
-            const bg = this.add.graphics();
-            bg.fillStyle(0x3399ff, 1);
-            bg.fillRoundedRect(
-                x - buttonWidth / 2,
-                y - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight,
-                cornerRadius
-            );
+    new UIButton(this, {
+      x: width - 140,
+      y: 125,
+      text: 'Preveri krog',
+      onClick: () => this.checkCircuit(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
 
-            const text = this.add
-                .text(x, y, label, {
-                    fontFamily: "Arial",
-                    fontSize: "20px",
-                    color: "#ffffff",
-                })
-                .setOrigin(0.5)
-                .setInteractive({ useHandCursor: true })
-                .on("pointerover", () => {
-                    bg.clear();
-                    bg.fillStyle(0x0f5cad, 1);
-                    bg.fillRoundedRect(
-                        x - buttonWidth / 2,
-                        y - buttonHeight / 2,
-                        buttonWidth,
-                        buttonHeight,
-                        cornerRadius
-                    );
-                })
-                .on("pointerout", () => {
-                    bg.clear();
-                    bg.fillStyle(0x3399ff, 1);
-                    bg.fillRoundedRect(
-                        x - buttonWidth / 2,
-                        y - buttonHeight / 2,
-                        buttonWidth,
-                        buttonHeight,
-                        cornerRadius
-                    );
-                })
-                .on("pointerdown", onClick);
-
-            return { bg, text };
-        };
-
-        makeButton(width - 140, 75, "Lestvica", () =>
-            this.scene.start("ScoreboardScene", { cameFromMenu: false })
-        );
-        makeButton(width - 140, 125, "Preveri krog", () => this.checkCircuit());
-        makeButton(width - 140, 125, "Run sim", () => this.sim.run());
-        makeButton(width - 140, 175, "Simulacija", () => {
-            this.connected = this.graph.simulate();
-            if (this.connected == 1) {
-                this.checkText.setStyle({ color: "#00aa00" });
-                this.checkText.setText("Električni tok je sklenjen");
-                this.sim = true;
-                return;
-            }
-            this.checkText.setStyle({ color: "#cc0000" });
-            if (this.connected == -1) {
-                this.checkText.setText("Manjka ti baterija");
-            } else if (this.connected == -2) {
-                this.checkText.setText("Stikalo je izklopljeno");
-            } else if (this.connected == 0) {
-                this.checkText.setText("Električni tok ni sklenjen");
-            }
-            this.sim = false;
-        });
+    new UIButton(this, {
+      x: width - 140,
+      y: 175,
+      text: 'Simulacija',
+      onClick: () => {
+        this.connected = this.graph.simulate()
+        if (this.connected == 1) {
+          this.checkText.setStyle({ color: '#00aa00' });
+          this.checkText.setText('Električni tok je sklenjen');
+          this.sim = true;
+          return;
+        }
+        this.checkText.setStyle({ color: '#cc0000' });
+        if (this.connected == -1) {
+          this.checkText.setText('Manjka ti baterija');
+        }
+        else if (this.connected == -2) {
+          this.checkText.setText('Stikalo je izklopljeno');
+        }
+        else if (this.connected == 0) {
+          this.checkText.setText('Električni tok ni sklenjen');
+        }
+        this.sim = false;
+      },
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
 
         // stranska vrstica na levi
         const panelWidth = 150;
@@ -300,25 +281,37 @@ export default class WorkspaceScene extends Phaser.Scene {
         // this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
         // this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
 
-        const backButton = this.add
-            .text(12, 10, "↩ Nazaj", {
-                fontFamily: "Arial",
-                fontSize: "20px",
-                color: "#387affff",
-                padding: { x: 20, y: 10 },
-            })
-            .setOrigin(0, 0)
-            .setInteractive({ useHandCursor: true })
-            .on("pointerover", () =>
-                backButton.setStyle({ color: "#0054fdff" })
-            )
-            .on("pointerout", () => backButton.setStyle({ color: "#387affff" }))
-            .on("pointerdown", () => {
-                this.cameras.main.fade(300, 0, 0, 0);
-                this.time.delayedCall(300, () => {
-                    this.scene.start("LabScene");
-                });
-            });
+    new UIButton(this, {
+      x: 12,
+      y: 10,
+      text: '↩ Nazaj',
+      onClick: () => {
+        this.cameras.main.fade(300, 0, 0, 0);
+        this.time.delayedCall(300, () => {
+          this.scene.start('LabScene');
+        });
+      },
+      origin: [0, 0],
+      style: {
+        fontSize: '20px',
+        color: '#387affff',
+        padding: { x: 20, y: 10 }
+      },
+      hover: {
+        color: '#0054fdff'
+      }
+    });
+
+
+    this.oscilloscope = new Oscilloscope(this, {
+      x: 400,
+      y: 300,
+      width: 300,
+      height: 200,
+      maxMeasurements: 10,
+      minVoltage: -5,
+      maxVoltage: 5
+    });
 
         this.add
             .text(
@@ -371,22 +364,24 @@ export default class WorkspaceScene extends Phaser.Scene {
         //     this.graph.simulate();
         //   });
 
-        console.log(JSON.parse(localStorage.getItem("users")));
-    }
+    console.log(JSON.parse(localStorage.getItem('users')));
 
-    getComponentDetails(type) {
-        const details = {
-            baterija: "Napetost: 3.3 V\nVir električne energije",
-            upor: "Uporabnost: omejuje tok\nMeri se v ohmih (Ω)",
-            svetilka: "Pretvarja električno energijo v svetlobo",
-            "stikalo-on": "Dovoljuje pretok toka",
-            "stikalo-off": "Prepreči pretok toka",
-            žica: "Povezuje komponente\nKlikni za obračanje",
-            ampermeter: "Meri električni tok\nEnota: amperi (A)",
-            voltmeter: "Meri električno napetost\nEnota: volti (V)",
-        };
-        return details[type] || "Komponenta";
-    }
+    this.testOscilloscopeSineWave();
+  }
+
+  getComponentDetails(type) {
+    const details = {
+      'baterija': 'Napetost: 3.3 V\nVir električne energije',
+      'upor': 'Uporabnost: omejuje tok\nMeri se v ohmih (Ω)',
+      'svetilka': 'Pretvarja električno energijo v svetlobo',
+      'stikalo-on': 'Dovoljuje pretok toka',
+      'stikalo-off': 'Prepreči pretok toka',
+      'žica': 'Povezuje komponente\nKlikni za obračanje',
+      'ampermeter': 'Meri električni tok\nEnota: amperi (A)',
+      'voltmeter': 'Meri električno napetost\nEnota: volti (V)'
+    };
+    return details[type] || 'Komponenta';
+  }
 
     createGrid() {
         const { width, height } = this.cameras.main;
@@ -614,44 +609,89 @@ export default class WorkspaceScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(11);
 
-        this.continueButton = this.add
-            .text(width / 2, height / 2 + 70, "Nadaljuj", {
-                fontSize: "18px",
-                color: "#0066ff",
-                backgroundColor: "#ffffff",
-                padding: { x: 20, y: 10 },
-            })
-            .setOrigin(0.5)
-            .setDepth(11)
-            .setInteractive({ useHandCursor: true })
-            .on("pointerover", () =>
-                this.continueButton.setStyle({ color: "#0044cc" })
-            )
-            .on("pointerout", () =>
-                this.continueButton.setStyle({ color: "#0066ff" })
-            )
-            .on("pointerdown", () => {
-                this.hideTheory();
-                this.placedComponents.forEach((comp) => comp.destroy());
-                this.placedComponents = [];
-                this.nextChallenge();
-            });
-    }
+    this.continueButton = new UIButton(this, {
+      x: width / 2,
+      y: height / 2 + 70,
+      text: 'Nadaljuj',
+      onClick: () => {
+        this.hideTheory();
+        this.placedComponents.forEach(comp => comp.destroy());
+        this.placedComponents = [];
+        this.nextChallenge();
+      },
+      style: {
+        fontSize: '18px',
+        color: '#0066ff',
+        backgroundColor: '#ffffff',
+        padding: { x: 20, y: 10 }
+      },
+      hover: {
+        color: '#0044cc'
+      },
+      depth: 11
+    });
 
-    hideTheory() {
-        if (this.theoryBack) {
-            this.theoryBack.destroy();
-            this.theoryBack = null;
-        }
-        if (this.theoryText) {
-            this.theoryText.destroy();
-            this.theoryText = null;
-        }
-        if (this.continueButton) {
-            this.continueButton.destroy();
-            this.continueButton = null;
-        }
+
+  }
+
+  hideTheory() {
+    if (this.theoryBack) {
+      this.theoryBack.destroy();
+      this.theoryBack = null;
     }
+    if (this.theoryText) {
+      this.theoryText.destroy();
+      this.theoryText = null;
+    }
+    if (this.continueButton) {
+      this.continueButton.destroy();
+      this.continueButton = null;
+    }
+  }
+
+  /**
+   * Test function to demonstrate oscilloscope with a sine wave
+   */
+  testOscilloscopeSineWave() {
+    // Initialize test parameters
+    let time = 0;
+    const frequency = 0.1; // Hz (10 second period, so we see variation across 10 measurements)
+    const amplitude = 4; // Volts (range -4 to +4, fits within -5 to +5)
+    
+    // Create a timer that measures voltage once per second
+    this.oscilloscopeTimer = this.time.addEvent({
+      delay: 1000, // 1 second
+      callback: () => {
+        // Calculate sine wave voltage: V = amplitude * sin(2π * frequency * time)
+        const voltage = amplitude * Math.sin(2 * Math.PI * frequency * time);
+        // console.logtime:", time, "voltage:", voltage.toFixed(3));
+        
+        // Measure the voltage with the oscilloscope
+        if (this.oscilloscope) {
+          this.oscilloscope.measure(voltage);
+        }else{
+          console.log("no osciloscope found")
+        }
+        
+        time += 1; // Increment time by 1 second
+      },
+      loop: true
+    });
+  }
+
+  /**
+   * Stop the oscilloscope test
+   */
+  stopOscilloscopeTest() {
+    if (this.oscilloscopeTimer) {
+      this.oscilloscopeTimer.remove();
+      this.oscilloscopeTimer = null;
+    }
+    if (this.oscilloscope) {
+      this.oscilloscope.clear();
+    }
+  }
+
 }
 
 const config = {

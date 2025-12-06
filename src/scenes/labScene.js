@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { LabTable } from '../componentsVisual/LabTable';
+import UIButton from '../ui/UIButton';
 
 export default class LabScene extends Phaser.Scene {
   constructor() {
@@ -109,52 +110,41 @@ export default class LabScene extends Phaser.Scene {
     });
 
 
-    const logoutButton = this.add.text(40, 30, '↩ Odjavi se', {
-        fontFamily: 'Arial',
-        fontSize: '20px',
-        color: '#0066ff',
-        padding: { x: 20, y: 10 }
-    })
-        .setOrigin(0, 0)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerover', () => logoutButton.setStyle({ color: '#0044cc' }))
-        .on('pointerout', () => logoutButton.setStyle({ color: '#0066ff' }))
-        .on('pointerdown', () => {
+    new UIButton(this, {
+        x: 40,
+        y: 30,
+        text: '↩ Odjavi se',
+        onClick: () => {
             localStorage.removeItem('username');
             this.scene.start('MenuScene');
-        });
+        },
+        origin: [0, 0],
+        style: {
+            fontSize: '20px',
+            color: '#0066ff',
+            padding: { x: 20, y: 10 }
+        },
+        hover: {
+            color: '#0044cc'
+        }
+    });
 
-    const buttonWidth = 180;
-    const buttonHeight = 45;
-    const cornerRadius = 10;
     const rightMargin = 60;
     const topMargin = 40;
 
     // za scoreboard
-    const scoreButtonBg = this.add.graphics();
-    scoreButtonBg.fillStyle(0x3399ff, 1);
-    scoreButtonBg.fillRoundedRect(width - buttonWidth - rightMargin, topMargin, buttonWidth, buttonHeight, cornerRadius);
-
-    const scoreButton = this.add.text(width - buttonWidth / 2 - rightMargin, topMargin + buttonHeight / 2, 'Lestvica', {
-        fontFamily: 'Arial',
-        fontSize: '20px',
-        color: '#ffffff'
-    })
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerover', () => {
-            scoreButtonBg.clear();
-            scoreButtonBg.fillStyle(0x0f5cad, 1);
-            scoreButtonBg.fillRoundedRect(width - buttonWidth - rightMargin, topMargin, buttonWidth, buttonHeight, cornerRadius);
-        })
-        .on('pointerout', () => {
-            scoreButtonBg.clear();
-            scoreButtonBg.fillStyle(0x3399ff, 1);
-            scoreButtonBg.fillRoundedRect(width - buttonWidth - rightMargin, topMargin, buttonWidth, buttonHeight, cornerRadius);
-        })
-        .on('pointerdown', () => {
-            this.scene.start('ScoreboardScene', {cameFromMenu: true});
-        });
+    new UIButton(this, {
+        x: width - 90 - rightMargin,
+        y: topMargin + 22.5,
+        text: 'Lestvica',
+        onClick: () => {
+            this.scene.start('ScoreboardScene', { cameFromScene: 'LabScene' });
+        },
+        background: {
+            width: 180,
+            height: 45
+        }
+    });
 
     // this.input.keyboard.on('keydown-ESC', () => {
     //     this.scene.start('MenuScene');

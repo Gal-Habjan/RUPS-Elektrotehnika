@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { LabTable } from '../componentsVisual/LabTable';
+import UIButton from '../ui/UIButton';
+import bcrypt from 'bcryptjs';
 
 export default class LoginScene extends Phaser.Scene {
     constructor() {
@@ -119,92 +121,56 @@ export default class LoginScene extends Phaser.Scene {
 
         //console.log(profilePic);
 
-        const buttonWidth = 200;  
-        const buttonHeight = 50;  
-        const cornerRadius = 12;  
         const buttonY = panelY + 290;
         const rectX = width / 2;
 
-        const loginButtonBg = this.add.graphics();
-        loginButtonBg.fillStyle(0x3399ff, 1);
-        loginButtonBg.fillRoundedRect(
-            rectX - buttonWidth / 2,
-            buttonY - buttonHeight / 2,
-            buttonWidth,
-            buttonHeight,
-            cornerRadius
-        );
-        loginButtonBg.setDepth(10);
-        loginButtonBg.setInteractive(
-            new Phaser.Geom.Rectangle(
-                rectX - buttonWidth / 2,
-                buttonY - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight
-            ),
-            Phaser.Geom.Rectangle.Contains
-        );
-        loginButtonBg.on('pointerover', () => {
-            this.input.setDefaultCursor('pointer');
-            loginButtonBg.clear();
-            loginButtonBg.fillStyle(0x0f5cad, 1);
-            loginButtonBg.fillRoundedRect(
-                rectX - buttonWidth / 2,
-                buttonY - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight,
-                cornerRadius
-            );
-        });
-        loginButtonBg.on('pointerout', () => {
-            this.input.setDefaultCursor('default');
-            loginButtonBg.clear();
-            loginButtonBg.fillStyle(0x3399ff, 1);
-            loginButtonBg.fillRoundedRect(
-                rectX - buttonWidth / 2,
-                buttonY - buttonHeight / 2,
-                buttonWidth,
-                buttonHeight,
-                cornerRadius
-            );
-        });
-        loginButtonBg.on('pointerdown', () => {
-            const usernameTrim = usernameInput.input.value.trim();
-            const passwordTrim = passwordInput.input.value.trim();
-            const pfps = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11'];
-            const pfpKey = pfps[Math.floor(Math.random() * pfps.length)];
+        new UIButton(this, {
+            x: rectX,
+            y: buttonY,
+            text: '▶ Prijavi se',
+            onClick: () => {
+                const usernameTrim = usernameInput.input.value.trim();
+                const passwordTrim = passwordInput.input.value.trim();
+                const pfps = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11'];
+                const pfpKey = pfps[Math.floor(Math.random() * pfps.length)];
 
-            if (usernameTrim && passwordTrim) {
-                const existingUser = users.find(u => u.username == usernameTrim);
-                if (existingUser) {
-                    if (existingUser.password !== passwordTrim) {
-                        alert('Napačno geslo!');
-                        return;
+                if (usernameTrim && passwordTrim) {
+                    const existingUser = users.find(u => u.username == usernameTrim);
+                    if (existingUser) {
+                        // Compare the entered password with stored hash using bcrypt
+                        const isPasswordCorrect = bcrypt.compareSync(passwordTrim, existingUser.password);
+                        if (!isPasswordCorrect) {
+                            alert('Napačno geslo!');
+                            return;
+                        }
+                    } else {
+                        // Hash the password with bcrypt before storing (salt rounds: 10)
+                        const hashedPassword = bcrypt.hashSync(passwordTrim, 10);
+                        users.push({ username: usernameTrim, password: hashedPassword, score: 0, profilePic: pfpKey });
+                        localStorage.setItem('users', JSON.stringify(users));
                     }
+
+                    localStorage.setItem('username', usernameTrim);
+                    localStorage.setItem('profilePic', pfpKey);
+
+                    usernameInput.dom.destroy();
+                    passwordInput.dom.destroy();
+
+                    this.scene.start('LabScene');
                 } else {
-                    users.push({ username: usernameTrim, password: passwordTrim, score: 0, profilePic: pfpKey });
-                    localStorage.setItem('users', JSON.stringify(users));
+                    alert('Vnesi uporabniško ime in geslo!');
                 }
-
-                localStorage.setItem('username', usernameTrim);
-                localStorage.setItem('profilePic', pfpKey);
-
-                usernameInput.dom.destroy();
-                passwordInput.dom.destroy();
-
-                this.scene.start('LabScene');
-            } else {
-                alert('Vnesi uporabniško ime in geslo!');
-            }
+            },
+            style: {
+                fontSize: '24px'
+            },
+            background: {
+                width: 200,
+                height: 50,
+                cornerRadius: 12
+            },
+            depth: 11
         });
-
-        const loginButton = this.add.text(rectX, buttonY, '▶ Prijavi se', {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#ffffff'
-        })
-            .setOrigin(0.5)
-            .setDepth(11);
 
         // počisti inpute ob izhodu
         this.events.once('shutdown', () => {
@@ -212,22 +178,25 @@ export default class LoginScene extends Phaser.Scene {
             passwordInput.dom.destroy();
         });
 
-        const backButton = this.add.text(40, 30, '↩ Nazaj v meni', {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0066ff',
-            // backgroundColor: '#e1e9ff',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0, 0) // levo zgoraj
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ color: '#0044cc' }))
-            .on('pointerout', () => backButton.setStyle({ color: '#0066ff' }))
-            .on('pointerdown', () => {
+        new UIButton(this, {
+            x: 40,
+            y: 30,
+            text: '↩ Nazaj v meni',
+            onClick: () => {
                 usernameInput.dom.destroy();
                 passwordInput.dom.destroy();
                 this.scene.start('MenuScene');
-            });
+            },
+            origin: [0, 0],
+            style: {
+                fontSize: '20px',
+                color: '#0066ff',
+                padding: { x: 20, y: 10 }
+            },
+            hover: {
+                color: '#0044cc'
+            }
+        });
 
         //localStorage.clear();
 
