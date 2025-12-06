@@ -8,6 +8,7 @@ import { Node } from '../logic/node';
 import { Switch } from '../components/switch';
 import { Resistor } from '../components/resistor';
 import UIButton from '../ui/UIButton';
+import Oscilloscope from '../ui/Oscilloscope';
 
 export default class WorkspaceScene extends Phaser.Scene {
   constructor() {
@@ -55,17 +56,17 @@ export default class WorkspaceScene extends Phaser.Scene {
     this.infoWindow = this.add.container(0, 0);
     this.infoWindow.setDepth(1000);
     this.infoWindow.setVisible(false);
-    
+
     // ozadje info okna
     const infoBox = this.add.rectangle(0, 0, 200, 80, 0x2c2c2c, 0.95);
     infoBox.setStrokeStyle(2, 0xffffff);
     const infoText = this.add.text(0, 0, '', {
-        fontSize: '14px',
-        color: '#ffffff',
-        align: 'left',
-        wordWrap: { width: 180 }
+      fontSize: '14px',
+      color: '#ffffff',
+      align: 'left',
+      wordWrap: { width: 180 }
     }).setOrigin(0.5);
-    
+
     this.infoWindow.add([infoBox, infoText]);
     this.infoText = infoText;
 
@@ -226,6 +227,17 @@ export default class WorkspaceScene extends Phaser.Scene {
       }
     });
 
+
+    this.oscilloscope = new Oscilloscope(this, {
+      x: 400,
+      y: 300,
+      width: 300,
+      height: 200,
+      maxMeasurements: 10,
+      minVoltage: -5,
+      maxVoltage: 5
+    });
+
     this.add.text(width / 2 + 50, 30, 'Povleci komponente na mizo in zgradi svoj električni krog!', {
       fontSize: '20px',
       color: '#333',
@@ -271,18 +283,20 @@ export default class WorkspaceScene extends Phaser.Scene {
     //   });
 
     console.log(JSON.parse(localStorage.getItem('users')));
+
+    this.testOscilloscopeSineWave();
   }
 
   getComponentDetails(type) {
     const details = {
-        'baterija': 'Napetost: 3.3 V\nVir električne energije',
-        'upor': 'Uporabnost: omejuje tok\nMeri se v ohmih (Ω)',
-        'svetilka': 'Pretvarja električno energijo v svetlobo',
-        'stikalo-on': 'Dovoljuje pretok toka',
-        'stikalo-off': 'Prepreči pretok toka',
-        'žica': 'Povezuje komponente\nKlikni za obračanje',
-        'ampermeter': 'Meri električni tok\nEnota: amperi (A)',
-        'voltmeter': 'Meri električno napetost\nEnota: volti (V)'
+      'baterija': 'Napetost: 3.3 V\nVir električne energije',
+      'upor': 'Uporabnost: omejuje tok\nMeri se v ohmih (Ω)',
+      'svetilka': 'Pretvarja električno energijo v svetlobo',
+      'stikalo-on': 'Dovoljuje pretok toka',
+      'stikalo-off': 'Prepreči pretok toka',
+      'žica': 'Povezuje komponente\nKlikni za obračanje',
+      'ampermeter': 'Meri električni tok\nEnota: amperi (A)',
+      'voltmeter': 'Meri električno napetost\nEnota: volti (V)'
     };
     return details[type] || 'Komponenta';
   }
@@ -511,24 +525,24 @@ export default class WorkspaceScene extends Phaser.Scene {
     }
 
     component.on('pointerover', () => {
-    if (component.getData('isInPanel')) {
+      if (component.getData('isInPanel')) {
         // prikaži info okno
         const details = this.getComponentDetails(type);
         this.infoText.setText(details);
-        
+
         // zraven komponente
         this.infoWindow.x = x + 120;
         this.infoWindow.y = y;
         this.infoWindow.setVisible(true);
-    }
-    component.setScale(1.1);
+      }
+      component.setScale(1.1);
     });
-    
+
     component.on('pointerout', () => {
-        if (component.getData('isInPanel')) {
-            this.infoWindow.setVisible(false);
-        }
-        component.setScale(1);
+      if (component.getData('isInPanel')) {
+        this.infoWindow.setVisible(false);
+      }
+      component.setScale(1);
     });
 
     // Label
@@ -778,6 +792,49 @@ export default class WorkspaceScene extends Phaser.Scene {
     if (this.continueButton) {
       this.continueButton.destroy();
       this.continueButton = null;
+    }
+  }
+
+  /**
+   * Test function to demonstrate oscilloscope with a sine wave
+   */
+  testOscilloscopeSineWave() {
+    // Initialize test parameters
+    let time = 0;
+    const frequency = 0.1; // Hz (10 second period, so we see variation across 10 measurements)
+    const amplitude = 4; // Volts (range -4 to +4, fits within -5 to +5)
+    
+    // Create a timer that measures voltage once per second
+    this.oscilloscopeTimer = this.time.addEvent({
+      delay: 1000, // 1 second
+      callback: () => {
+        // Calculate sine wave voltage: V = amplitude * sin(2π * frequency * time)
+        const voltage = amplitude * Math.sin(2 * Math.PI * frequency * time);
+        console.log("time:", time, "voltage:", voltage.toFixed(3));
+        
+        // Measure the voltage with the oscilloscope
+        if (this.oscilloscope) {
+          this.oscilloscope.measure(voltage);
+        }else{
+          console.log("no osciloscope found")
+        }
+        
+        time += 1; // Increment time by 1 second
+      },
+      loop: true
+    });
+  }
+
+  /**
+   * Stop the oscilloscope test
+   */
+  stopOscilloscopeTest() {
+    if (this.oscilloscopeTimer) {
+      this.oscilloscopeTimer.remove();
+      this.oscilloscopeTimer = null;
+    }
+    if (this.oscilloscope) {
+      this.oscilloscope.clear();
     }
   }
 
