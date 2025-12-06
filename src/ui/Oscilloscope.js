@@ -164,7 +164,7 @@ export default class Oscilloscope {
      * @param {number} voltage - The voltage to measure
      */
     measure(voltage) {
-        console.log("measuring voltage ", voltage)
+        // console.log("measuring voltage ", voltage)
         // Add new measurement
         this.measurements.push(voltage);
         

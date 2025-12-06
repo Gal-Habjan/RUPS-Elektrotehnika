@@ -810,7 +810,7 @@ export default class WorkspaceScene extends Phaser.Scene {
       callback: () => {
         // Calculate sine wave voltage: V = amplitude * sin(2π * frequency * time)
         const voltage = amplitude * Math.sin(2 * Math.PI * frequency * time);
-        console.log("time:", time, "voltage:", voltage.toFixed(3));
+        // console.logtime:", time, "voltage:", voltage.toFixed(3));
         
         // Measure the voltage with the oscilloscope
         if (this.oscilloscope) {
