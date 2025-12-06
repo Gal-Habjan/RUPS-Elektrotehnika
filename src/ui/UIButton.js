@@ -77,42 +77,63 @@ export default class UIButton {
 
             // Store background properties for redrawing
             this.bgProps = { bgX, bgY, bgWidth, bgHeight, bgColor, bgHoverColor, cornerRadius };
+
+            // Create an invisible interactive zone over the button background
+            this.interactiveZone = this.scene.add.zone(x, y, bgWidth, bgHeight)
+                .setOrigin(this.origin)
+                .setInteractive({ useHandCursor: true });
+
+            if (depth !== undefined) {
+                this.backgroundGraphics.setDepth(depth - 1);
+                this.interactiveZone.setDepth(depth);
+            }
+
+            // Add hover and click events to the zone
+            this.interactiveZone.on('pointerover', () => {
+                const { bgX, bgY, bgWidth, bgHeight, bgHoverColor, cornerRadius } = this.bgProps;
+                this.drawBackground(bgX, bgY, bgWidth, bgHeight, bgHoverColor, cornerRadius);
+                if (this.hoverColor && this.textObject) {
+                    this.textObject.setStyle({ color: this.hoverColor });
+                }
+            });
+
+            this.interactiveZone.on('pointerout', () => {
+                const { bgX, bgY, bgWidth, bgHeight, bgColor, cornerRadius } = this.bgProps;
+                this.drawBackground(bgX, bgY, bgWidth, bgHeight, bgColor, cornerRadius);
+                if (this.textObject) {
+                    this.textObject.setStyle({ color: this.normalColor });
+                }
+            });
+
+            this.interactiveZone.on('pointerdown', onClick);
         }
 
         // Create text
         const originValue = Array.isArray(this.origin) ? this.origin : [this.origin, this.origin];
 
         this.textObject = this.scene.add.text(x, y, text, this.style)
-            .setOrigin(...originValue)
-            .setInteractive({ useHandCursor: true });
+            .setOrigin(...originValue);
 
         if (depth !== undefined) {
-            this.textObject.setDepth(depth);
-            if (this.backgroundGraphics) {
-                this.backgroundGraphics.setDepth(depth - 1);
-            }
+            this.textObject.setDepth(depth + 1);
         }
 
-        // Add hover effects
-        this.textObject.on('pointerover', () => {
-            if (this.backgroundGraphics && this.bgProps) {
-                const { bgX, bgY, bgWidth, bgHeight, bgHoverColor, cornerRadius } = this.bgProps;
-                this.drawBackground(bgX, bgY, bgWidth, bgHeight, bgHoverColor, cornerRadius);
-            }
-            if (this.hoverColor) {
-                this.textObject.setStyle({ color: this.hoverColor });
-            }
-        });
+        // For text-only buttons (no background), make text interactive
+        if (!background) {
+            this.textObject.setInteractive({ useHandCursor: true });
 
-        this.textObject.on('pointerout', () => {
-            if (this.backgroundGraphics && this.bgProps) {
-                const { bgX, bgY, bgWidth, bgHeight, bgColor, cornerRadius } = this.bgProps;
-                this.drawBackground(bgX, bgY, bgWidth, bgHeight, bgColor, cornerRadius);
-            }
-            this.textObject.setStyle({ color: this.normalColor });
-        });
+            this.textObject.on('pointerover', () => {
+                if (this.hoverColor) {
+                    this.textObject.setStyle({ color: this.hoverColor });
+                }
+            });
 
-        this.textObject.on('pointerdown', onClick);
+            this.textObject.on('pointerout', () => {
+                this.textObject.setStyle({ color: this.normalColor });
+            });
+
+            this.textObject.on('pointerdown', onClick);
+        }
     }
 
     drawBackground(x, y, width, height, color, cornerRadius) {
@@ -129,6 +150,9 @@ export default class UIButton {
         if (this.backgroundGraphics) {
             this.backgroundGraphics.setVisible(visible);
         }
+        if (this.interactiveZone) {
+            this.interactiveZone.setVisible(visible);
+        }
         return this;
     }
 
@@ -136,9 +160,12 @@ export default class UIButton {
      * Set button depth
      */
     setDepth(depth) {
-        this.textObject.setDepth(depth);
+        this.textObject.setDepth(depth + 1);
         if (this.backgroundGraphics) {
             this.backgroundGraphics.setDepth(depth - 1);
+        }
+        if (this.interactiveZone) {
+            this.interactiveZone.setDepth(depth);
         }
         return this;
     }
@@ -158,6 +185,9 @@ export default class UIButton {
         this.textObject.destroy();
         if (this.backgroundGraphics) {
             this.backgroundGraphics.destroy();
+        }
+        if (this.interactiveZone) {
+            this.interactiveZone.destroy();
         }
     }
 }
