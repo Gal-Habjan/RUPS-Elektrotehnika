@@ -1,8 +1,18 @@
-import { Component } from './component.js';
+import { Component } from "./component.js";
+import { ComponentDirection } from "./ComponentDirection.js";
 
 class Bulb extends Component {
-    constructor(id, start, end) {
-        super(id, 'bulb', start, end, 'src/components/lamp.png', true);
+    constructor(id, start, end, componentObject = null) {
+        super(
+            id,
+            "bulb",
+            start,
+            end,
+            "src/components/lamp.png",
+            componentObject,
+            ComponentDirection.HORIZONTAL,
+            false
+        );
         this.is_on = true;
     }
 

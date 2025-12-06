@@ -2,21 +2,20 @@ import { Node } from "../logic/node.js";
 import { Component } from "./component.js";
 import { ComponentDirection } from "./ComponentDirection.js";
 
-class Battery extends Component {
-    constructor(id, start, end, voltage, componentObject = null) {
+class Voltmeter extends Component {
+    constructor(id, start, end, componentObject = null) {
         super(
             id,
-            "battery",
+            "voltmeter",
             start,
             end,
-            "src/components/battery.png",
+            "src/components/voltmeter.png",
             componentObject,
             ComponentDirection.HORIZONTAL,
-            true
+            false
         );
-        this.voltage = voltage;
         this.debug_color = 0x00ff00;
     }
 }
 
-export { Battery };
+export { Voltmeter };

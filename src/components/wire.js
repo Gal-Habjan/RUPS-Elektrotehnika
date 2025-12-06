@@ -20,10 +20,12 @@ class Wire {
     addNode(node) {
         console.log("adding node", node);
         let oldWire = node.wire;
+        console.log(this.nodes.length);
         if (oldWire) {
-            for (const node of oldWire.nodes) {
-                this.nodes.push(node);
-                node.wire = this;
+            console.log(oldWire);
+            for (const childNode of oldWire.nodes) {
+                this.nodes.push(childNode);
+                childNode.wire = this;
             }
             oldWire.nodes = [];
             oldWire.deleteWire();
@@ -31,12 +33,24 @@ class Wire {
             this.nodes.push(node);
             node.wire = this;
         }
-
+        console.log(this.nodes.length);
         if (this.nodes.length >= 2) {
             this.draw();
         }
     }
+    removeNode(node) {
+        const idx = this.nodes.indexOf(node);
+        if (idx === -1) return;
 
+        this.nodes.splice(idx, 1);
+        node.wire = null;
+
+        if (this.nodes.length >= 2) {
+            this.draw();
+        } else {
+            this.deleteWire();
+        }
+    }
     getClosestPoint(x, y) {
         let closestPoint = null;
         let minDistance = Infinity;
@@ -82,9 +96,9 @@ class Wire {
         path.push(point);
 
         let previousPoint = startPoint;
-        console.log(path);
+        // console.log(path);
         for (const point of path) {
-            console.log(point);
+            // console.log(point);
             if (point == previousPoint) continue;
             let line = new Phaser.Geom.Line(
                 previousPoint.x,
@@ -100,7 +114,7 @@ class Wire {
     }
 
     draw() {
-        console.log("startDraw");
+        // console.log("startDraw");
         this.paths = [];
         this.renderer.clear();
         this.renderer.lineStyle(3, 0x000000, 1);
@@ -108,8 +122,8 @@ class Wire {
 
         this.paths.push(this.initialDraw(this.nodes[0], this.nodes[1]));
         for (let i = 2; i < this.nodes.length; i++) {
-            console.log("additional node draw");
-            console.log(this.paths);
+            // console.log("additional node draw");
+            // console.log(this.paths);
             this.paths.push(this.addAdditionalPoint(this.nodes[i]));
         }
     }
@@ -124,7 +138,7 @@ class Wire {
         this.renderer.destroy();
     }
     initialDraw(start, end) {
-        console.log("starting initial draw of wire", end.x, end.y);
+        // console.log("starting initial draw of wire", end.x, end.y);
 
         let directionsStart = this.getPosibleDirections(start, end);
         let directionsEnd = this.getPosibleDirections(end, start);
@@ -146,9 +160,9 @@ class Wire {
         path.push(endPosition);
 
         let previousPoint = startPosition;
-        console.log(path);
+        // console.log(path);
         for (const point of path) {
-            console.log(point);
+            // console.log(point);
             if (point == previousPoint) continue;
             let line = new Phaser.Geom.Line(
                 previousPoint.x,
@@ -165,15 +179,15 @@ class Wire {
 
     getPath(start, end, directionsStart, directionsEnd) {
         let path = [];
-        console.log("Calculating path from", start, "to", end);
-        console.log(
-            start.x,
-            end.x,
-            start.y,
-            end.y,
-            directionsStart,
-            directionsEnd
-        );
+        // console.log("Calculating path from", start, "to", end);
+        // console.log(
+        //     start.x,
+        //     end.x,
+        //     start.y,
+        //     end.y,
+        //     directionsStart,
+        //     directionsEnd
+        // );
         if (start.x == end.x) {
             if (
                 (directionsStart.includes("UP") &&
@@ -183,7 +197,7 @@ class Wire {
                     directionsEnd.includes("UP") &&
                     start.y <= end.y)
             ) {
-                console.log("same x axis looking towards each other");
+                // console.log("same x axis looking towards each other");
                 return path;
             }
 
@@ -200,7 +214,7 @@ class Wire {
                     directionsEnd.includes("LEFT") &&
                     start.x < end.x)
             ) {
-                console.log("same y axis looking towards each other");
+                // console.log("same y axis looking towards each other");
                 return path;
             }
             path.push({ x: start.x, y: start.y + 40 });
@@ -217,7 +231,7 @@ class Wire {
                 ) {
                     path.push({ x: (start.x + end.x) / 2, y: start.y });
                     path.push(finalMidPoint);
-                    console.log("2 snaps horizontal");
+                    // console.log("2 snaps horizontal");
                     return path;
                 }
             }
@@ -230,7 +244,7 @@ class Wire {
                 ) {
                     path.push({ x: start.x, y: (start.y + end.y) / 2 });
                     path.push(finalMidPoint);
-                    console.log("2 snaps vertical");
+                    // console.log("2 snaps vertical");
                     return path;
                 }
             }
@@ -242,7 +256,7 @@ class Wire {
                     (start.x < end.x && directionsEnd.includes("LEFT"))
                 ) {
                     path.push({ x: start.x, y: end.y });
-                    console.log("1 snap vertical");
+                    // console.log("1 snap vertical");
                     return path;
                 }
             }
@@ -253,7 +267,7 @@ class Wire {
                     (start.y > end.y && directionsEnd.includes("UP"))
                 ) {
                     path.push({ x: end.x, y: start.y });
-                    console.log("1 snap horizontal");
+                    // console.log("1 snap horizontal");
                     return path;
                 }
             }
@@ -270,7 +284,7 @@ class Wire {
                 (directionsStart.includes("UP") && start.y >= end.y) ||
                 (directionsStart.includes("DOWN") && start.y <= end.y)
             ) {
-                console.log("same x axis looking towards each other");
+                // console.log("same x axis looking towards each other");
                 return path;
             }
 
@@ -283,7 +297,7 @@ class Wire {
                 (directionsStart.includes("LEFT") && start.x > end.x) ||
                 (directionsStart.includes("RIGHT") && start.x < end.x)
             ) {
-                console.log("same y axis looking towards each other");
+                // console.log("same y axis looking towards each other");
                 return path;
             }
             path.push({ x: start.x, y: start.y + 40 });
@@ -294,13 +308,13 @@ class Wire {
         for (const dir of directionsStart) {
             if (dir == "UP" || dir == "DOWN") {
                 path.push({ x: start.x, y: end.y });
-                console.log("1 snap vertical");
+                // console.log("1 snap vertical");
                 return path;
             }
 
             if (dir == "LEFT" || dir == "RIGHT") {
                 path.push({ x: end.x, y: start.y });
-                console.log("1 snap horizontal");
+                // console.log("1 snap horizontal");
                 return path;
             }
         }
@@ -320,7 +334,7 @@ class Wire {
             if (node.y >= targetNode.y) directions.push("UP");
             if (node.y <= targetNode.y) directions.push("DOWN");
         } else {
-            if (node.initY > 0) {
+            if (node.initY < 0) {
                 if (node.y >= targetNode.y) directions.push("UP");
             } else {
                 if (node.y <= targetNode.y) directions.push("DOWN");

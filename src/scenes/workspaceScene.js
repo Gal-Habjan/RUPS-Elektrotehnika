@@ -7,7 +7,10 @@ import { CircuitGraph } from "../logic/circuit_graph";
 import { Node } from "../logic/node";
 import { Switch } from "../components/switch";
 import { Resistor } from "../components/resistor";
-import { createComponent } from "../components/ComponentHelper";
+import {
+    createComponent,
+    openComponentContextMenu,
+} from "../components/ComponentHelper";
 export default class WorkspaceScene extends Phaser.Scene {
     constructor() {
         super("WorkspaceScene");
@@ -288,14 +291,14 @@ export default class WorkspaceScene extends Phaser.Scene {
             .setOrigin(0.5);
 
         // komponente v stranski vrstici
-        // this.createNewComponent(panelWidth / 2, 100, "baterija", 0xffcc00);
+        this.createNewComponent(panelWidth / 2, 100, "baterija", 0xffcc00);
         this.createNewComponent(panelWidth / 2, 180, "upor", 0xff6600);
-        // this.createNewComponent(panelWidth / 2, 260, "svetilka", 0xff0000);
-        // this.createNewComponent(panelWidth / 2, 340, "stikalo-on", 0x666666);
+        this.createNewComponent(panelWidth / 2, 260, "svetilka", 0xff0000);
+        this.createNewComponent(panelWidth / 2, 340, "stikalo-on", 0x666666);
         // this.createNewComponent(panelWidth / 2, 420, "stikalo-off", 0x666666);
         // this.createNewComponent(panelWidth / 2, 500, "žica", 0x0066cc);
-        // this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
-        // this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
+        this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
+        this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
 
         const backButton = this.add
             .text(12, 10, "↩ Nazaj", {
@@ -336,6 +339,37 @@ export default class WorkspaceScene extends Phaser.Scene {
         // shrani komponente na mizi
         this.placedComponents = [];
         this.gridSize = 40;
+
+        // Listen for right-clicks on the scene and open menu when a component is under pointer
+        this.input.on("pointerdown", (pointer) => {
+            const isRightClick =
+                (pointer.event && pointer.event.button === 2) ||
+                (pointer.rightButtonDown && pointer.rightButtonDown()) ||
+                (typeof pointer.buttons !== "undefined" &&
+                    pointer.buttons === 2);
+
+            if (!isRightClick) return;
+
+            const objects = this.input.hitTestPointer(pointer);
+            const target = objects.find(
+                (o) => o && o.getData && o.getData("logicComponent")
+            );
+            if (target) {
+                openComponentContextMenu(
+                    this,
+                    target,
+                    pointer.worldX,
+                    pointer.worldY
+                );
+                try {
+                    if (
+                        pointer.event &&
+                        typeof pointer.event.preventDefault === "function"
+                    )
+                        pointer.event.preventDefault();
+                } catch (e) {}
+            }
+        });
 
         // const scoreButton = this.add.text(this.scale.width / 1.1, 25, 'Lestvica', {
         //   fontFamily: 'Arial',
