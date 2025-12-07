@@ -14,6 +14,7 @@ class Component {
         console.log(
             `Creating component: ${id} of type ${type} between ${start.id} and ${end.id}`
         );
+        this.prefix = "";
         this.id = id;
         this.type = type;
         this.start = start;
@@ -57,7 +58,7 @@ class Component {
             ],
         };
         this.values = {
-            name: "",
+            name: this.prefix,
             voltageDrop: { value: 0, automatic: false },
             current: { value: 0, automatic: false },
             power: { value: 0, automatic: false },

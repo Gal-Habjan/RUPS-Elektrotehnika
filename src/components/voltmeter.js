@@ -18,6 +18,7 @@ class Voltmeter extends Component {
             false
         );
         this.debug_color = 0x00ff00;
+        this.values.name = Voltmeter.prefix + ++Voltmeter.count;
     }
 }
 

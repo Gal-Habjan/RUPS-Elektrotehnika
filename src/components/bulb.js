@@ -17,6 +17,7 @@ class Bulb extends Component {
             false
         );
         this.is_on = true;
+        this.values.name = Bulb.prefix + ++Bulb.count;
     }
 
     // turnOn(){

@@ -23,17 +23,21 @@ export function createContextMenu(scene, worldX, worldY, items) {
     container.add(bg);
 
     items.forEach((it, idx) => {
-        const txt = scene.add
-            .text(8, 4 + idx * itemHeight, it.label, {
-                fontSize: "14px",
-                color: "#ffffff",
-            })
+        const y = 4 + idx * itemHeight;
+        const itemBg = scene.add
+            .rectangle(0, y, menuWidth, itemHeight, 0x000000, 0)
             .setOrigin(0, 0)
             .setInteractive({ useHandCursor: true });
 
-        txt.on("pointerup", (pointer) => {
+        const txt = scene.add
+            .text(8, y, it.label, {
+                fontSize: "14px",
+                color: "#ffffff",
+            })
+            .setOrigin(0, 0);
+
+        itemBg.on("pointerup", (pointer) => {
             try {
-                console.log("clicked");
                 if (typeof it.onClick === "function") it.onClick(pointer);
             } catch (e) {
                 console.error("ContextMenu item callback error", e);
@@ -41,10 +45,35 @@ export function createContextMenu(scene, worldX, worldY, items) {
             destroy();
         });
 
+        itemBg.on("pointerover", () => itemBg.setFillStyle(0xffffff, 0.06));
+        itemBg.on("pointerout", () => itemBg.setFillStyle(0x000000, 0));
+
+        container.add(itemBg);
         container.add(txt);
     });
 
+    const outsideListener = (pointer) => {
+        try {
+            const hits = scene.input.hitTestPointer(pointer) || [];
+            for (const h of hits) {
+                if (!h) continue;
+                if (h === container) return;
+                if (container.list && container.list.includes(h)) return;
+                if (h.parentContainer && h.parentContainer === container)
+                    return;
+            }
+            destroy();
+        } catch (e) {
+            destroy();
+        }
+    };
+
+    scene.input.on("pointerdown", outsideListener);
+
     function destroy() {
+        if (scene.input && typeof outsideListener === "function") {
+            scene.input.off("pointerdown", outsideListener);
+        }
         if (scene._contextMenu) {
             scene._contextMenu.destroy(true);
             scene._contextMenu = null;

@@ -18,17 +18,30 @@ class Battery extends Component {
             true
         );
         this.voltage = voltage;
+        this.isAC = false;
         this.debug_color = 0x00ff00;
-        super.properties = {
-            fields: [
-                { label: "Name", type: "text" },
 
-                { label: "Voltage (V)", type: "number" },
+        this.properties = {
+            fields: [
+                { label: "Name", type: "text", key: "name" },
+                {
+                    label: "Source",
+                    key: "sourceType",
+                    type: "radio",
+                    options: ["DC", "AC"],
+                },
+                {
+                    label: "Voltage (V)",
+                    type: "number",
+                    key: "voltage",
+                    automatic: false,
+                },
             ],
         };
-        super.values = {
-            name: "",
-            voltage: 0,
+        this.values = {
+            name: "Battery",
+            sourceType: "DC",
+            voltage: { value: voltage || 0, automatic: false },
         };
     }
 }

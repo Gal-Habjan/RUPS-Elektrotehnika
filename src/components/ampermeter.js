@@ -17,7 +17,7 @@ class Ampermeter extends Component {
             ComponentDirection.HORIZONTAL,
             false
         );
-
+        this.values.name = Ampermeter.prefix + ++Ampermeter.count;
         this.debug_color = 0x00ff00;
     }
 }

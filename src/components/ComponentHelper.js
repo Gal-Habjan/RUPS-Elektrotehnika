@@ -452,6 +452,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
 
 // Top-level helper: keep action logic here, UI rendering delegated to ui/ContextMenu
 export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
+    const logic = compObj.getData("logicComponent");
     const items = [
         {
             label: "Properties",
@@ -462,66 +463,6 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                     compObj.getData("type") ||
                     (logicComp && logicComp.type) ||
                     "";
-
-                // Build fields based on component type
-
-                // const initialValues = {};
-
-                // switch (compType) {
-                //     case "battery":
-                //     case "baterija":
-                //         fields.push({
-                //             key: "voltage",
-                //             label: "Voltage (V)",
-                //             type: "number",
-                //             default:
-                //                 logicComp && logicComp.voltage
-                //                     ? logicComp.voltage
-                //                     : 3.3,
-                //         });
-                //         fields.push({
-                //             key: "sourceType",
-                //             label: "Source",
-                //             type: "radio",
-                //             options: ["DC", "AC"],
-                //             default: logicComp && logicComp.isAC ? "AC" : "DC",
-                //         });
-                //         initialValues.voltage =
-                //             logicComp &&
-                //             typeof logicComp.voltage !== "undefined"
-                //                 ? logicComp.voltage
-                //                 : null;
-                //         initialValues.sourceType =
-                //             logicComp && logicComp.isAC ? "AC" : "DC";
-                //         break;
-                //     case "resistor":
-                //     case "upor":
-                //         fields.push({
-                //             key: "resistance",
-                //             label: "Resistance (Ω)",
-                //             type: "number",
-                //             default:
-                //                 logicComp && logicComp.resistance
-                //                     ? logicComp.resistance
-                //                     : null,
-                //         });
-                //         initialValues.resistance =
-                //             logicComp &&
-                //             typeof logicComp.resistance !== "undefined"
-                //                 ? logicComp.resistance
-                //                 : null;
-                //         break;
-                //     default:
-                //         // Generic name field for other components
-                //         fields.push({
-                //             key: "name",
-                //             label: "Name",
-                //             type: "text",
-                //             default: compObj.getData("displayName") || "",
-                //         });
-                //         initialValues.name =
-                //             compObj.getData("displayName") || "";
-                // }
 
                 let properties = logicComp.properties;
                 console.log("PROPERTIES |", properties);
@@ -566,6 +507,13 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
             },
         },
     ];
-
+    if (logic.type == "switch") {
+        items.push({
+            label: "Toggle",
+            onClick: () => {
+                logic.switchToggle();
+            },
+        });
+    }
     createContextMenu(workspace, worldX, worldY, items);
 }
