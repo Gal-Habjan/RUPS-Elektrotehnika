@@ -3,6 +3,8 @@ class CircuitSim {
         this.source;
         this.tree = [];
         this.paths = [];
+        this.activePaths = [];
+        this.running_sim = false;
     }
 
     findSource() {
@@ -138,11 +140,70 @@ class CircuitSim {
     }
 
     init() {
+        this.generate_tree();
+        this.pickActivePaths();
+    }
+
+    pickActivePaths() {
+        this.activePaths = [];
         
+        for (const path of this.paths) {
+            let isActive = true;
+            
+            // Skip first (battery) - check only middle components
+            for (let i = 1; i < path.length - 1; i++) {
+                const componentId = path[i];
+                const component = window.components.find(c => c.id === componentId);
+                
+                if (!component) {
+                    isActive = false;
+                    break;
+                }
+                
+                // Check if there's an open switch in the path
+                if (component.type === 'switch' && !component.is_on) {
+                    isActive = false;
+                    break;
+                }
+                
+                const directionalTypes = ['battery', 'ampermeter', 'voltmeter', 'diode', 'led', 'bulb'];
+                if (directionalTypes.includes(component.type)) {
+                    const prevComponentId = path[i - 1];
+                    const prevComponent = window.components.find(c => c.id === prevComponentId);
+                    if (!directionalTypes.includes(prevComponent.type)) {break;}
+                    // Check which node is shared between previous component and current component
+                    let enteredFromStart = false;
+                    if (prevComponent.type === 'battery') {
+                        if (prevComponent.start.wire && component.start.wire === prevComponent.start.wire) {
+                            enteredFromStart = true;
+                        }
+                    }
+                    
+                    // If we entered from end node, current flows backwards - component blocks
+                    if (!enteredFromStart) {
+                        isActive = false;
+                        break;
+                    }
+                }
+            }
+            
+            if (isActive) {
+                this.activePaths.push(path);
+            }
+        }
+        
+        return this.activePaths;
     }
 
     run_sim() {
-        // go throught the tree and calculate voltages and currents based on 
+        while (this.running_sim) {
+            this.run_tick();
+        }
+    }
+
+    run_tick() {
+        this.pickActivePaths();
+        // calculate voltages and currents for active paths
     }
 
     getTreeString(tree = this.tree) {

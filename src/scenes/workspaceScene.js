@@ -263,17 +263,17 @@ export default class WorkspaceScene extends Phaser.Scene {
             },
         });
 
-        new UIButton(this, {
-            x: width - 140,
-            y: 225,
-            text: "new_sim",
-            onClick: () => this.sim.generate_tree(),
-            background: {
-                width: 180,
-                height: 45,
-            },
-        });
-        window.sim = this.sim; // DEBUGGING PURPOSES
+    new UIButton(this, {
+      x: width - 140,
+      y: 225,
+      text: 'new_sim',
+      onClick: () => this.sim.init(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+    window.sim = this.sim; // DEBUGGING PURPOSES
 
         new UIButton(this, {
             x: width - 140,

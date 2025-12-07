@@ -352,11 +352,13 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     // Add circles at start and end nodes
     console.log("Adding circles to component:", comp);
     const circleClickColor = 0x535353;
+    const startCircleColor = 0xff0000; // Red for start nodes
+    const endCircleColor = 0x0000ff;   // Blue for end nodes
     const startCircle = workspace.add
-        .circle(comp.localStart.x, comp.localStart.y, 5, 0xff0000)
+        .circle(comp.localStart.x, comp.localStart.y, 5, startCircleColor)
         .setOrigin(0.1, 0.5);
     const endCircle = workspace.add
-        .circle(comp.localEnd.x, comp.localEnd.y, 5, 0x0000ff)
+        .circle(comp.localEnd.x, comp.localEnd.y, 5, endCircleColor)
         .setOrigin(0.8, 0.5);
 
     // Add the circles to the component container
@@ -367,6 +369,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     const addCircleInteractivity = (circle, nodeType) => {
         let line = null;
         let isDragging = false;
+        const circleInitColor = nodeType === "start" ? startCircleColor : endCircleColor;
 
         circle.setInteractive({ useHandCursor: true });
 
