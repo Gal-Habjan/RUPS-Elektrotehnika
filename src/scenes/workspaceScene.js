@@ -9,8 +9,9 @@ import { Switch } from '../components/switch';
 import { Resistor } from '../components/resistor';
 import UIButton from '../ui/UIButton';
 import Oscilloscope from '../ui/Oscilloscope';
-import { createComponent } from "../components/ComponentHelper";
+import { createComponent,openComponentContextMenu } from "../components/ComponentHelper";
 import { CircuitSim } from "../logic/circuit_sim.js";
+
 export default class WorkspaceScene extends Phaser.Scene {
     constructor() {
         super("WorkspaceScene");
@@ -25,14 +26,14 @@ export default class WorkspaceScene extends Phaser.Scene {
 
     preload() {
         this.graph = new CircuitGraph();
-        this.load.image("baterija", "src/components/battery.png");
-        this.load.image("upor", "src/components/resistor.png");
-        this.load.image("svetilka", "src/components/lamp.png");
-        this.load.image("stikalo-on", "src/components/switch-on.png");
-        this.load.image("stikalo-off", "src/components/switch-off.png");
+        this.load.image("baterija", "src/components/battery.svg");
+        this.load.image("upor", "src/components/resistor1.svg");
+        this.load.image("svetilka", "src/components/diode.svg");
+        this.load.image("stikalo-on", "src/components/switch-on.svg");
+        this.load.image("stikalo-off", "src/components/switch-off.svg");
         this.load.image("žica", "src/components/wire.png");
-        this.load.image("ampermeter", "src/components/ammeter.png");
-        this.load.image("voltmeter", "src/components/voltmeter.png");
+        this.load.image("ampermeter", "src/components/ampermeter.svg");
+        this.load.image("voltmeter", "src/components/voltmeter.svg");
     }
 
     create() {
@@ -283,14 +284,14 @@ export default class WorkspaceScene extends Phaser.Scene {
             .setOrigin(0.5);
 
         // komponente v stranski vrstici
-        // this.createNewComponent(panelWidth / 2, 100, "baterija", 0xffcc00);
+        this.createNewComponent(panelWidth / 2, 100, "baterija", 0xffcc00);
         this.createNewComponent(panelWidth / 2, 180, "upor", 0xff6600);
-        // this.createNewComponent(panelWidth / 2, 260, "svetilka", 0xff0000);
-        // this.createNewComponent(panelWidth / 2, 340, "stikalo-on", 0x666666);
+        this.createNewComponent(panelWidth / 2, 260, "svetilka", 0xff0000);
+        this.createNewComponent(panelWidth / 2, 340, "stikalo-on", 0x666666);
         // this.createNewComponent(panelWidth / 2, 420, "stikalo-off", 0x666666);
         // this.createNewComponent(panelWidth / 2, 500, "žica", 0x0066cc);
-        // this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
-        // this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
+        this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
+        this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
 
     new UIButton(this, {
       x: 12,
@@ -343,6 +344,37 @@ export default class WorkspaceScene extends Phaser.Scene {
         // shrani komponente na mizi
         this.placedComponents = [];
         this.gridSize = 40;
+
+        // Listen for right-clicks on the scene and open menu when a component is under pointer
+        this.input.on("pointerdown", (pointer) => {
+            const isRightClick =
+                (pointer.event && pointer.event.button === 2) ||
+                (pointer.rightButtonDown && pointer.rightButtonDown()) ||
+                (typeof pointer.buttons !== "undefined" &&
+                    pointer.buttons === 2);
+
+            if (!isRightClick) return;
+
+            const objects = this.input.hitTestPointer(pointer);
+            const target = objects.find(
+                (o) => o && o.getData && o.getData("logicComponent")
+            );
+            if (target) {
+                openComponentContextMenu(
+                    this,
+                    target,
+                    pointer.worldX,
+                    pointer.worldY
+                );
+                try {
+                    if (
+                        pointer.event &&
+                        typeof pointer.event.preventDefault === "function"
+                    )
+                        pointer.event.preventDefault();
+                } catch (e) {}
+            }
+        });
 
         // const scoreButton = this.add.text(this.scale.width / 1.1, 25, 'Lestvica', {
         //   fontFamily: 'Arial',

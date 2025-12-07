@@ -1,13 +1,51 @@
 import { Battery } from "../components/battery";
 import { Bulb } from "../components/bulb";
 import { Wire } from "../components/wire";
+import { Ampermeter } from "../components/ampermeter";
+import { Voltmeter } from "../components/voltmeter";
 import { CircuitGraph } from "../logic/circuit_graph";
 import { Node } from "../logic/node";
 import { Switch } from "../components/switch";
 import { Resistor } from "../components/resistor";
 import { ComponentDirection } from "./ComponentDirection.js";
+import { createContextMenu } from "../ui/ContextMenu.js";
+import { openPropertiesPanel } from "../ui/PropertiesPanel.js";
 export function createComponent(workspace, x, y, type, color, wireGraphics) {
     const component = workspace.add.container(x, y);
+
+    // Ensure the browser context menu is disabled for the workspace so
+    // right-click can be handled by Phaser. Do this once per workspace.
+    if (!workspace._contextMenuDisabled) {
+        try {
+            if (
+                workspace.input &&
+                workspace.input.mouse &&
+                typeof workspace.input.mouse.disableContextMenu === "function"
+            ) {
+                workspace.input.mouse.disableContextMenu();
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        // Fallback: prevent default on the canvas element if accessible
+        try {
+            const canvas =
+                workspace.game && workspace.game.canvas
+                    ? workspace.game.canvas
+                    : null;
+            if (canvas && !canvas._rupsContextMenuListenerAdded) {
+                canvas.addEventListener("contextmenu", (ev) =>
+                    ev.preventDefault()
+                );
+                canvas._rupsContextMenuListenerAdded = true;
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        workspace._contextMenuDisabled = true;
+    }
 
     let comp = null;
     let componentImage;
@@ -20,7 +58,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
                 id,
                 new Node(id + "_start", -40, 0),
                 new Node(id + "_end", 40, 0),
-                3.3
+                3.3,
+                component
             );
             comp.type = "battery";
             comp.localStart = { x: -40, y: 0 };
@@ -28,7 +67,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "baterija")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -48,7 +87,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "upor")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -58,7 +97,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             comp = new Bulb(
                 id,
                 new Node(id + "_start", -40, 0),
-                new Node(id + "_end", 40, 0)
+                new Node(id + "_end", 40, 0),
+                component
             );
             comp.type = "bulb";
             comp.localStart = { x: -40, y: 0 };
@@ -66,7 +106,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "svetilka")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -77,7 +117,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
                 id,
                 new Node(id + "_start", -40, 0),
                 new Node(id + "_end", 40, 0),
-                true
+                true,
+                component
             );
             comp.type = "switch";
             comp.localStart = { x: -40, y: 0 };
@@ -85,7 +126,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "stikalo-on")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -96,7 +137,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
                 id,
                 new Node(id + "_start", -40, 0),
                 new Node(id + "_end", 40, 0),
-                false
+                false,
+                component
             );
             comp.type = "switch";
             comp.localStart = { x: -40, y: 0 };
@@ -104,45 +146,46 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "stikalo-off")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
 
-        case "žica":
-            id = "wire_" + workspace.getRandomInt(1000, 9999);
-            comp = new Wire(
+        case "ampermeter":
+            id = "ammeter_" + workspace.getRandomInt(1000, 9999);
+            comp = new Ampermeter(
                 id,
                 new Node(id + "_start", -40, 0),
-                new Node(id + "_end", 40, 0)
+                new Node(id + "_end", 40, 0),
+                component
             );
-            comp.type = "wire";
+            comp.type = "ampermeter";
             comp.localStart = { x: -40, y: 0 };
             comp.localEnd = { x: 40, y: 0 };
             componentImage = workspace.add
-                .image(0, 0, "žica")
+                .image(0, 0, "ampermeter")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
-        case "ampermeter":
-            id = "ammeter_" + workspace.getRandomInt(1000, 9999);
-            componentImage = workspace.add
-                .image(0, 0, "ampermeter")
-                .setOrigin(0.5)
-                .setDisplaySize(100, 100);
-            component.add(componentImage);
-            component.setData("logicComponent", null);
-            break;
         case "voltmeter":
             id = "voltmeter_" + workspace.getRandomInt(1000, 9999);
+            comp = new Voltmeter(
+                id,
+                new Node(id + "_start", -40, 0),
+                new Node(id + "_end", 40, 0),
+                component
+            );
+            comp.type = "voltmeter";
+            comp.localStart = { x: -40, y: 0 };
+            comp.localEnd = { x: 40, y: 0 };
             componentImage = workspace.add
                 .image(0, 0, "voltmeter")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
-            component.setData("logicComponent", null);
+            component.setData("logicComponent", comp);
             break;
     }
 
@@ -184,7 +227,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
         })
         .setOrigin(0.5);
     component.add(label);
-
+    component.setData("displayLabel", label);
     component.setSize(70, 70);
     component.setInteractive({ draggable: true, useHandCursor: true });
 
@@ -239,6 +282,27 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             component.setData("isRotated", false);
             component.setData("isInPanel", false);
 
+            // assign a display name based on the component class static counter
+            if (comp && comp.constructor) {
+                // update the label that was created for this visual component
+                if (
+                    typeof label !== "undefined" &&
+                    label &&
+                    typeof label.setText === "function"
+                ) {
+                    try {
+                        label.setText(comp.values.name);
+                    } catch (e) {
+                        console.warn("Failed to set label text", e);
+                    }
+                } else {
+                    console.warn(
+                        "Label not found or not editable for component",
+                        comp.id
+                    );
+                }
+            }
+
             workspace.createNewComponent(
                 component.getData("originalX"),
                 component.getData("originalY"),
@@ -256,7 +320,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             const comp = component.getData("logicComponent");
             console.log("Updating logic node positions for component:", comp);
             if (comp) {
-                comp.updateMove();
+                comp.updateMove(workspace);
             }
         } else {
             // postavi se nazaj na originalno mesto
@@ -285,6 +349,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             // });
         }
     });
+
+    // context menu actions are provided via openComponentContextMenu (top-level)
 
     // Add circles at start and end nodes
     console.log("Adding circles to component:", comp);
@@ -346,14 +412,16 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
                     const startNode = circle.getData("logicNode");
                     const endNode = targetCircle.getData("logicNode");
                     if (!startNode.wire && !endNode.wire) {
+                        console.log("COMPONENT WIRE | new wire");
                         const wire = new Wire(startNode, endNode, workspace);
                         wire.type = "wire";
 
                         // Add wire to the graph
                         workspace.graph.addComponent(wire);
+                    } else if (startNode.wire) {
+                        startNode.wire.addNode(endNode);
                     } else {
-                        if (startNode.wire) startNode.wire.addNode(endNode);
-                        if (endNode.wire) endNode.wire.addNode(startNode);
+                        endNode.wire.addNode(startNode);
                     }
                 }
 
@@ -379,4 +447,72 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     // component.on("pointerout", () => {
     //     component.setScale(1);
     // });
+}
+
+// Top-level helper: keep action logic here, UI rendering delegated to ui/ContextMenu
+export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
+    const logic = compObj.getData("logicComponent");
+    const items = [
+        {
+            label: "Properties",
+            onClick: () => {
+                console.log("changeValue");
+                const logicComp = compObj.getData("logicComponent");
+                const compType =
+                    compObj.getData("type") ||
+                    (logicComp && logicComp.type) ||
+                    "";
+
+                let properties = logicComp.properties;
+                console.log("PROPERTIES |", properties);
+                openPropertiesPanel(
+                    workspace,
+
+                    properties.fields,
+                    logicComp.values,
+                    (values) => {
+                        const label = compObj.getData("displayLabel");
+                        label.setText(values.name);
+                        logicComp.values = values;
+                    },
+                    () => {
+                        // cancelled
+                        console.log("Properties cancelled");
+                    }
+                );
+            },
+        },
+        {
+            label: "rotate",
+            onClick: () => {
+                console.log("rotate");
+
+                const logic = compObj.getData("logicComponent");
+                if (logic && typeof logic.updateMove === "function")
+                    logic.updateMove(workspace, true);
+            },
+        },
+        {
+            label: "remove wires",
+            onClick: () => {
+                console.log("removeWires");
+                const logic = compObj.getData("logicComponent");
+                if (logic) {
+                    if (logic.start && logic.start.wire)
+                        logic.start.wire.removeNode(logic.start);
+                    if (logic.end && logic.end.wire)
+                        logic.end.wire.removeNode(logic.end);
+                }
+            },
+        },
+    ];
+    if (logic.type == "switch") {
+        items.push({
+            label: "Toggle",
+            onClick: () => {
+                logic.switchToggle();
+            },
+        });
+    }
+    createContextMenu(workspace, worldX, worldY, items);
 }
