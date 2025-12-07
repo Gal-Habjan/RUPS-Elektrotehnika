@@ -2,10 +2,11 @@ class CircuitSim {
     constructor() {
         this.source;
         this.tree = [];
+        this.paths = [];
     }
 
     findSource() {
-        this.source = window.components.find(c => c.type === 'battery');
+        this.source = window.components.find(c => c.type === 'battery' && !c.componentObject.getData('isInPanel'));
         return this.source;
     }
 
@@ -22,122 +23,112 @@ class CircuitSim {
         // calculate currents through components
     }
 
-    generate_tree() {
+    generate_tree() {   
         this.findSource();
         this.tree = [];
-        if (!this.source) return;
         
-        // Simple DFS to generate tree
-        /*
-            start from source
-            go to components.start or .end depending on where we came from
-            go through node to wire which holds ajesent components
-            if there is 2 components just add next component to tree and move onto next component
-            if there is more than 2 components we have a branch recursivly generate tree for each branch
-            all branches need to finish back at source node
-            if they dont backtrack and try different paths
-
-            example:
-            1-2
-            2-3
-            2-4
-            3-1
-            4-5
-            5-1
-            tree = [1, 2, [3, [4, 5]], 1]
-        */
+        if (!this.source) {
+            return;
+        }
         
-        const visited = new Set();
-        const path = [];
+        // Validate battery wiring: must have wires on opposite poles
+        if (!this.validateBatteryWiring()) {
+            console.error('Battery wiring error: wires must be connected to opposite poles (start and end nodes)');
+            return;
+        }
         
-        // Start DFS from the positive terminal of the battery
-        const result = this.dfs(this.source, this.source.start, null, visited, path);
-        if (result) {
-            this.tree = result;
+        const allPaths = [];
+        this.collectAllPaths(this.source, this.source.end, new Set(), [this.source.id], allPaths);
+        
+        if (allPaths.length > 0) {
+            this.paths = allPaths;
         }
     }
     
-    dfs(currentComponent, currentNode, previousNode, visited, path) {
-        // Add current component to the path
-        path.push(currentComponent);
+    validateBatteryWiring() {
+        if (!this.source) return false;
+        
+        const startHasWire = this.source.start.wire !== null && this.source.start.wire !== undefined;
+        const endHasWire = this.source.end.wire !== null && this.source.end.wire !== undefined;
+        
+        // Check if both poles have wires
+        if (!startHasWire || !endHasWire) {
+            console.warn('Battery must have wires on both poles');
+            return false;
+        }
+        
+        // Check if wires are different (not the same wire)
+        if (this.source.start.wire === this.source.end.wire) {
+            console.warn('Battery poles cannot be connected by the same wire');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    collectAllPaths(currentComponent, currentNode, visited, path, allPaths) {
         visited.add(currentComponent.id);
         
-        // Get the next node (opposite end of the current component)
         const nextNode = currentNode === currentComponent.start ? currentComponent.end : currentComponent.start;
-        
-        // Check if we've completed the circuit (back to source's negative terminal)
-        if (currentComponent !== this.source && nextNode === this.source.end) {
-            path.push(this.source);
-            const result = [...path];
-            path.pop();
-            visited.delete(currentComponent.id);
-            return result;
-        }
-        
-        // Get all components connected to the next node via the wire
         const adjacentComponents = this.getAdjacentComponents(nextNode, currentComponent);
         
-        // Filter out visited components
-        const unvisitedComponents = adjacentComponents.filter(comp => !visited.has(comp.id));
+        const batteryInAdjacent = adjacentComponents.find(comp => comp.id === this.source.id);
         
-        if (unvisitedComponents.length === 0) {
-            // Dead end, backtrack
-            path.pop();
+        if (batteryInAdjacent && currentComponent.id !== this.source.id) {
+            const startingNode = this.source.start;
+            const returningNode = nextNode;
+            
+            let batteryReturnNode = null;
+            if (this.source.start.wire && returningNode.wire === this.source.start.wire) {
+                batteryReturnNode = this.source.start;
+            } else if (this.source.end.wire && returningNode.wire === this.source.end.wire) {
+                batteryReturnNode = this.source.end;
+            }
+            
+            if (batteryReturnNode !== startingNode) {
+                allPaths.push([...path, this.source.id]);
+            }
+            
             visited.delete(currentComponent.id);
-            return null;
-        } else if (unvisitedComponents.length === 1) {
-            // Single path, continue
-            const nextComponent = unvisitedComponents[0];
-            const nextComponentNode = nextComponent.start === nextNode ? nextComponent.start : nextComponent.end;
-            const result = this.dfs(nextComponent, nextComponentNode, nextNode, visited, path);
-            if (result) {
-                return result;
-            }
-        } else {
-            // Branch point - try each branch
-            const branches = [];
-            let allBranchesComplete = true;
-            
-            for (const nextComponent of unvisitedComponents) {
-                const nextComponentNode = nextComponent.start === nextNode ? nextComponent.start : nextComponent.end;
-                const branchResult = this.dfs(nextComponent, nextComponentNode, nextNode, visited, path);
-                
-                if (branchResult) {
-                    branches.push(branchResult);
-                } else {
-                    allBranchesComplete = false;
-                }
-            }
-            
-            if (allBranchesComplete && branches.length > 0) {
-                path.push(branches);
-                const result = [...path];
-                path.pop();
-                path.pop();
-                visited.delete(currentComponent.id);
-                return result;
-            }
+            return;
         }
         
-        // Backtrack
-        path.pop();
+        const unvisitedComponents = adjacentComponents.filter(comp => !visited.has(comp.id));
+        
+        for (const nextComponent of unvisitedComponents) {
+            let nextComponentNode;
+            if (nextNode.wire && nextComponent.start.wire === nextNode.wire) {
+                nextComponentNode = nextComponent.start;
+            } else if (nextNode.wire && nextComponent.end.wire === nextNode.wire) {
+                nextComponentNode = nextComponent.end;
+            } else {
+                nextComponentNode = (nextComponent.start === nextNode || 
+                    (nextComponent.start.x === nextNode.x && nextComponent.start.y === nextNode.y)) 
+                                    ? nextComponent.start : nextComponent.end;
+            }
+            
+            path.push(nextComponent.id);
+            this.collectAllPaths(nextComponent, nextComponentNode, visited, path, allPaths);
+            path.pop();
+        }
+        
         visited.delete(currentComponent.id);
-        return null;
     }
     
     getAdjacentComponents(node, excludeComponent) {
-        // Get all components connected through the wire at this node
-        if (!node.wire) return [];
+        if (!node.wire) {
+            return [];
+        }
         
         const adjacentComponents = [];
         
-        // Check all nodes in the same wire
         for (const wireNode of node.wire.nodes) {
-            if (wireNode.component && wireNode.component.id !== excludeComponent.id) {
-                // Check if this component's start or end is connected to this wire
-                if (wireNode === wireNode.component.start || wireNode === wireNode.component.end) {
-                    if (!adjacentComponents.find(c => c.id === wireNode.component.id)) {
-                        adjacentComponents.push(wireNode.component);
+            if (wireNode.component) {
+                if (wireNode.component.id !== excludeComponent.id) {
+                    if (wireNode === wireNode.component.start || wireNode === wireNode.component.end) {
+                        if (!adjacentComponents.find(c => c.id === wireNode.component.id)) {
+                            adjacentComponents.push(wireNode.component);
+                        }
                     }
                 }
             }
@@ -147,11 +138,32 @@ class CircuitSim {
     }
 
     init() {
-        this.generate_tree();
+        
     }
 
     run_sim() {
         // go throught the tree and calculate voltages and currents based on 
+    }
+
+    getTreeString(tree = this.tree) {
+        if (!tree) return '(empty)';
+        
+        if (Array.isArray(tree)) {
+            const items = tree.map(item => {
+                if (Array.isArray(item)) {
+                    return `[${this.getTreeString(item)}]`;
+                } else {
+                    const component = window.components.find(c => c.id === item);
+                    const type = component ? component.values.name : '???';
+                    return `${type}`;
+                }
+            });
+            return items.join(', ');
+        } else {
+            const component = window.components.find(c => c.id === tree);
+            const type = component ? component.values.name : '???';
+            return type;
+        }
     }
 
 }

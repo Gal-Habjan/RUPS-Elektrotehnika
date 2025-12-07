@@ -38,7 +38,9 @@ export default class WorkspaceScene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.cameras.main;
-
+        this.sim = new CircuitSim();
+        this.clearAllComponents();
+        
         // površje mize
         const desk = this.add
             .rectangle(0, 0, width, height, 0xe0c9a6)
@@ -1139,11 +1141,11 @@ export default class WorkspaceScene extends Phaser.Scene {
             wireMap.set(wireId, wire);
           });
           
-          alert(`Uvoženo ${importData.components.length} komponent!`);
+          //alert(`Uvoženo ${importData.components.length} komponent!`);
           
         } catch (error) {
           console.error('Import failed:', error);
-          alert('Napaka pri uvozu datoteke!');
+          //alert('Napaka pri uvozu datoteke!');
         }
       };
       
