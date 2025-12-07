@@ -260,8 +260,42 @@ export default class WorkspaceScene extends Phaser.Scene {
     new UIButton(this, {
       x: width - 140,
       y: 225,
+      text: 'new_sim',
+      onClick: () => this.sim.generate_tree(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+    window.sim = this.sim; // DEBUGGING PURPOSES
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 275,
       text: 'Formule',
       onClick: () => this.showCalculationFormulas(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 325,
+      text: 'Export',
+      onClick: () => this.exportComponents(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 375,
+      text: 'Import',
+      onClick: () => this.importComponents(),
       background: {
         width: 180,
         height: 45
@@ -902,6 +936,351 @@ export default class WorkspaceScene extends Phaser.Scene {
     if (this.oscilloscope) {
       this.oscilloscope.clear();
     }
+  }
+
+  /**
+   * Export components to JSON format and download as file
+   */
+  exportComponents() {
+    console.log('🔽 Exporting components...');
+    
+    // Only export placed components (not source components in sidebar)
+    if (!this.placedComponents || this.placedComponents.length === 0) {
+      console.warn('No placed components to export');
+      alert('Ni komponent za izvoz!');
+      return;
+    }
+
+    // Create export data structure
+    const exportData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      components: []
+    };
+
+    // Export only placed components (those on the workspace, not in panel)
+    this.placedComponents.forEach(visualContainer => {
+      const comp = visualContainer.getData('logicComponent');
+      if (!comp) return;
+      
+      // Skip if component is in panel (source component)
+      if (visualContainer.getData('isInPanel')) {
+        console.log(`Skipping panel component: ${comp.id}`);
+        return;
+      }
+      
+      const x = visualContainer.x;
+      const y = visualContainer.y;
+      const rotation = visualContainer.rotation || 0;
+      
+      const componentData = {
+        id: comp.id,
+        type: comp.type,
+        name: comp.name,
+        x: x,
+        y: y,
+        rotation: rotation,
+        start: {
+          id: comp.start.id,
+          x: comp.start.x,
+          y: comp.start.y,
+          wireId: comp.start.wire ? comp.start.wire.id : null
+        },
+        end: {
+          id: comp.end.id,
+          x: comp.end.x,
+          y: comp.end.y,
+          wireId: comp.end.wire ? comp.end.wire.id : null
+        }
+      };
+
+      // Add component-specific properties
+      if (comp.type === 'battery') {
+        componentData.voltage = comp.voltage || 9;
+      } else if (comp.type === 'resistor') {
+        componentData.resistance = comp.resistance || 100;
+      }
+
+      exportData.components.push(componentData);
+    });
+
+    // Convert to JSON
+    const jsonString = JSON.stringify(exportData, null, 2);
+    
+    // Create download
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `circuit_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log('✅ Export successful:', exportData.components.length, 'components');
+    alert(`Izvoženo ${exportData.components.length} komponent!`);
+  }
+
+  /**
+   * Import components from JSON file
+   */
+  importComponents() {
+    console.log('🔼 Importing components...');
+    
+    // Create file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const importData = JSON.parse(event.target.result);
+          
+          if (!importData.components || !Array.isArray(importData.components)) {
+            throw new Error('Invalid file format');
+          }
+
+          console.log('📦 Import data:', importData);
+          console.log('📦 Components to import:', importData.components.length);
+          
+          // Clear existing components
+          this.clearAllComponents();
+          
+          // Maps to track created objects
+          const nodeMap = new Map(); // oldNodeId -> new Node object
+          const wireMap = new Map(); // oldWireId -> new Wire object
+          const componentMap = new Map(); // oldCompId -> new visual component container
+          
+          // Step 1: Create all components with their visual containers
+          importData.components.forEach(compData => {
+            console.log(`📦 Creating component: ${compData.type} at (${compData.x}, ${compData.y})`);
+            
+            // Map component type to the visual type expected by createComponent
+            let visualType;
+            if (compData.type === 'battery') visualType = 'baterija';
+            else if (compData.type === 'resistor') visualType = 'upor';
+            else if (compData.type === 'bulb') visualType = 'svetilka';
+            else if (compData.type === 'switch') visualType = 'stikalo-on';
+            else if (compData.type === 'ammeter' || compData.type === 'ampermeter') visualType = 'ampermeter';
+            else if (compData.type === 'voltmeter') visualType = 'voltmeter';
+            else {
+              console.warn(`Unknown component type: ${compData.type}`);
+              return;
+            }
+            
+            // Create the visual component using the helper
+            const visualComponent = createComponent(this, compData.x, compData.y, visualType, 0xffffff);
+            const logicComponent = visualComponent.getData('logicComponent');
+            
+            // IMPORTANT: Mark as placed component (not source component in sidebar)
+            visualComponent.setData('isInPanel', false);
+            
+            // Add to window.components if createComponent didn't do it
+            if (!window.components) window.components = [];
+            if (!window.components.includes(logicComponent)) {
+              window.components.push(logicComponent);
+            }
+            
+            // Add to placedComponents array
+            this.placedComponents.push(visualComponent);
+            
+            // Add logic component to graph
+            this.graph.addComponent(logicComponent);
+            if (logicComponent.start) this.graph.addNode(logicComponent.start);
+            if (logicComponent.end) this.graph.addNode(logicComponent.end);
+            
+            // Set rotation if it exists
+            if (compData.rotation) {
+              visualComponent.setRotation(compData.rotation);
+            }
+            
+            // CRITICAL: Update logic node positions to world coordinates
+            // This ensures nodes are at correct positions for wiring
+            this.updateLogicNodePositions(visualComponent);
+            
+            // Update component-specific properties
+            if (compData.type === 'battery' && compData.voltage) {
+              logicComponent.voltage = compData.voltage;
+            } else if (compData.type === 'resistor' && compData.resistance) {
+              logicComponent.resistance = compData.resistance;
+            }
+            
+            // Update the display label with the component name
+            const label = visualComponent.getData('displayLabel');
+            if (label && logicComponent.values && logicComponent.values.name) {
+              label.setText(logicComponent.values.name);
+            }
+            
+            // Store mappings
+            nodeMap.set(compData.start.id, logicComponent.start);
+            nodeMap.set(compData.end.id, logicComponent.end);
+            componentMap.set(compData.id, visualComponent);
+          });
+          
+          // Step 2: Group nodes by wireId and create wires
+          const wireGroups = new Map(); // wireId -> array of nodes
+          
+          console.log('📦 Processing wire connections...');
+          importData.components.forEach(compData => {
+            const startNode = nodeMap.get(compData.start.id);
+            const endNode = nodeMap.get(compData.end.id);
+            
+            console.log(`  Component ${compData.id}: start.wireId=${compData.start.wireId}, end.wireId=${compData.end.wireId}`);
+            
+            // Group start nodes by wireId
+            if (compData.start.wireId && startNode) {
+              if (!wireGroups.has(compData.start.wireId)) {
+                wireGroups.set(compData.start.wireId, []);
+              }
+              wireGroups.get(compData.start.wireId).push(startNode);
+              console.log(`    Added start node to wire group ${compData.start.wireId}`);
+            }
+            
+            // Group end nodes by wireId
+            if (compData.end.wireId && endNode) {
+              if (!wireGroups.has(compData.end.wireId)) {
+                wireGroups.set(compData.end.wireId, []);
+              }
+              wireGroups.get(compData.end.wireId).push(endNode);
+              console.log(`    Added end node to wire group ${compData.end.wireId}`);
+            }
+          });
+          
+          // Create wires and connect all nodes that share the same wireId
+          console.log(`📦 Creating ${wireGroups.size} wires...`);
+          wireGroups.forEach((nodes, wireId) => {
+            if (nodes.length < 2) {
+              console.warn(`Wire ${wireId} has less than 2 nodes, skipping`);
+              return;
+            }
+            
+            // Wire constructor expects: (startNode, endNode, workspace)
+            // Use first two nodes to initialize the wire
+            const firstNode = nodes[0];
+            const secondNode = nodes[1];
+            
+            console.log(`  Creating wire ${wireId} with ${nodes.length} nodes`);
+            const wire = new Wire(firstNode, secondNode, this);
+            
+            // If there are more than 2 nodes, add them to the wire
+            if (nodes.length > 2) {
+              for (let i = 2; i < nodes.length; i++) {
+                if (!nodes[i].wire) {
+                  console.log(`  Adding additional node ${nodes[i].id} to wire ${wireId}`);
+                  wire.addNode(nodes[i]);
+                }
+              }
+            }
+            
+            wireMap.set(wireId, wire);
+          });
+          
+          console.log('✅ Import successful!');
+          console.log('   Components created:', window.components.length);
+          console.log('   Wires created:', wireMap.size);
+          alert(`Uvoženo ${importData.components.length} komponent!`);
+          
+        } catch (error) {
+          console.error('❌ Import failed:', error);
+          alert('Napaka pri uvozu datoteke!');
+        }
+      };
+      
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  }
+
+  /**
+   * Clear all placed components from the workspace (keeps panel components)
+   */
+  clearAllComponents() {
+    console.log('🗑️ Clearing placed components and wires...');
+    
+    // Collect all unique wires from placed components before destroying them
+    const wiresToDestroy = new Set();
+    
+    // Only destroy placed components, not panel (source) components
+    if (this.placedComponents && this.placedComponents.length > 0) {
+      // Clone the array to avoid modification during iteration
+      const componentsToDestroy = [...this.placedComponents];
+      
+      componentsToDestroy.forEach(visualContainer => {
+        const comp = visualContainer.getData('logicComponent');
+        if (!comp) return;
+        
+        // Only destroy if NOT in panel (skip source components)
+        if (visualContainer.getData('isInPanel')) {
+          console.log(`Skipping panel component: ${comp.id}`);
+          return;
+        }
+        
+        console.log(`Destroying placed component: ${comp.id}`);
+        
+        // Collect wires for destruction
+        if (comp.start && comp.start.wire) {
+          wiresToDestroy.add(comp.start.wire);
+        }
+        if (comp.end && comp.end.wire) {
+          wiresToDestroy.add(comp.end.wire);
+        }
+        
+        // Destroy start/end node visual dots if they exist
+        if (comp.start && comp.start.graphics) {
+          comp.start.graphics.destroy();
+        }
+        
+        if (comp.end && comp.end.graphics) {
+          comp.end.graphics.destroy();
+        }
+        
+        // Remove from graph
+        if (this.graph) {
+          if (comp.start) this.graph.nodes.delete(comp.start);
+          if (comp.end) this.graph.nodes.delete(comp.end);
+          if (this.graph.components) {
+            const compIndex = this.graph.components.indexOf(comp);
+            if (compIndex > -1) this.graph.components.splice(compIndex, 1);
+          }
+        }
+        
+        // Destroy the visual Phaser container
+        visualContainer.destroy();
+        
+        // Call destroy on the logic component itself
+        if (comp.destroy) {
+          comp.destroy();
+        }
+      });
+    }
+    
+    // Destroy all collected wires
+    console.log(`🗑️ Destroying ${wiresToDestroy.size} wires...`);
+    wiresToDestroy.forEach(wire => {
+      if (wire && wire.deleteWire) {
+        wire.deleteWire();
+      }
+    });
+    
+    // Clear the placedComponents array
+    this.placedComponents = [];
+    
+    // Clean up window.components array - remove only non-panel components
+    if (window.components) {
+      window.components = window.components.filter(comp => {
+        const visualContainer = comp.componentObject;
+        return visualContainer && visualContainer.getData('isInPanel');
+      });
+    }
+    
+    console.log('✅ All placed components and wires cleared');
   }
 
 }

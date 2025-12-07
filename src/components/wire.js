@@ -5,6 +5,9 @@ import Phaser from "phaser";
 import { getClosestPointOnSegment } from "./wireHelper.js";
 class Wire {
     constructor(start, end, workspace) {
+        // Generate unique ID for this wire
+        this.id = `wire_${Math.floor(Math.random() * 10000)}`;
+        
         this.nodes = [];
 
         this.renderer = workspace.add.graphics();
