@@ -298,6 +298,10 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
 
             label.setText(comp.values.name);
 
+            // Always add component to placedComponents (including battery)
+            workspace.placedComponents.push(component);
+
+            // Create new component in panel for non-battery components
             if (comp.type != "battery") {
                 workspace.createNewComponent(
                     component.getData("originalX"),
@@ -305,8 +309,6 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
                     component.getData("type"),
                     component.getData("color")
                 );
-
-                workspace.placedComponents.push(component);
             }
         } else if (!component.getData("isInPanel")) {
             // na mizi in se postavi na mrežo
