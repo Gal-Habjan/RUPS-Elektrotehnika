@@ -272,8 +272,42 @@ export default class WorkspaceScene extends Phaser.Scene {
     new UIButton(this, {
       x: width - 140,
       y: 275,
+      text: 'new_sim',
+      onClick: () => this.sim.generate_tree(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+    window.sim = this.sim; // DEBUGGING PURPOSES
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 275,
       text: 'Formule',
       onClick: () => this.showCalculationFormulas(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 325,
+      text: 'Export',
+      onClick: () => this.exportComponents(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 375,
+      text: 'Import',
+      onClick: () => this.importComponents(),
       background: {
         width: 180,
         height: 45
