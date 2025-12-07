@@ -16,6 +16,10 @@ class Node {
     move() {
         if (this.wire) this.wire.draw();
     }
+    destroyNode() {
+        if (this.wire) this.wire.removeNode(this);
+    }
+
     // addConnection(node, wire) {
     //     this.connected.set(node.id, { node: node, wire: wire });
     //     node.connected.set(this.id, { node: this, wire: wire });

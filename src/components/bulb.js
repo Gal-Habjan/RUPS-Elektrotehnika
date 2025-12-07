@@ -1,9 +1,23 @@
-import { Component } from './component.js';
+import { Component } from "./component.js";
+import { ComponentDirection } from "./ComponentDirection.js";
 
 class Bulb extends Component {
-    constructor(id, start, end) {
-        super(id, 'bulb', start, end, 'src/components/lamp.png', true);
+    static count = 0;
+    static prefix = "L"; // lamp
+
+    constructor(id, start, end, componentObject = null) {
+        super(
+            id,
+            "bulb",
+            start,
+            end,
+            "src/components/lamp.png",
+            componentObject,
+            ComponentDirection.HORIZONTAL,
+            false
+        );
         this.is_on = true;
+        this.values.name = Bulb.prefix + ++Bulb.count;
     }
 
     // turnOn(){
