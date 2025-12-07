@@ -67,7 +67,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "baterija")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -87,7 +87,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "upor")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -106,7 +106,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "svetilka")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -126,7 +126,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "stikalo-on")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -146,15 +146,11 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "stikalo-off")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
 
-        case "žica":
-            id = "wire_" + workspace.getRandomInt(1000, 9999);
-            // wire option removed; wires are created by dragging between node circles
-            break;
         case "ampermeter":
             id = "ammeter_" + workspace.getRandomInt(1000, 9999);
             comp = new Ampermeter(
@@ -169,7 +165,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "ampermeter")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
@@ -187,7 +183,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             componentImage = workspace.add
                 .image(0, 0, "voltmeter")
                 .setOrigin(0.5)
-                .setDisplaySize(100, 100);
+                .setDisplaySize(80, 80);
             component.add(componentImage);
             component.setData("logicComponent", comp);
             break;
