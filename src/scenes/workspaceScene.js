@@ -263,7 +263,7 @@ export default class WorkspaceScene extends Phaser.Scene {
       x: width - 140,
       y: 225,
       text: 'new_sim',
-      onClick: () => this.sim.generate_tree(),
+      onClick: () => this.sim.init(),
       background: {
         width: 180,
         height: 45
