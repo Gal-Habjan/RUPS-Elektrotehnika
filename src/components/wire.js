@@ -20,11 +20,8 @@ class Wire {
     }
 
     addNode(node) {
-        console.log("adding node", node);
         let oldWire = node.wire;
-        console.log(this.nodes.length);
         if (oldWire) {
-            console.log(oldWire);
             for (const childNode of oldWire.nodes) {
                 this.nodes.push(childNode);
                 childNode.wire = this;
@@ -35,7 +32,6 @@ class Wire {
             this.nodes.push(node);
             node.wire = this;
         }
-        console.log(this.nodes.length);
         if (this.nodes.length >= 2) {
             this.draw();
         }
@@ -131,7 +127,6 @@ class Wire {
     }
 
     deleteWire() {
-        console.log("DELETE");
         this.renderer.clear();
 
         for (const comp of this.nodes) {
@@ -296,12 +291,10 @@ class Wire {
                 }
 
                 if (dir == "LEFT" || dir == "RIGHT") {
-                    console.log("CHECKED");
                     if (
                         (start.y < end.y && directionsEnd.includes("UP")) ||
                         (start.y > end.y && directionsEnd.includes("DOWN"))
                     ) {
-                        console.log("DONE");
                         return [{ x: end.x, y: start.y }];
                     }
                 }

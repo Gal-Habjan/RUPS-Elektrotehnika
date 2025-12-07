@@ -34,7 +34,19 @@ class Battery extends Component {
                     label: "Voltage (V)",
                     type: "number",
                     key: "voltage",
-                    automatic: false,
+                    automatic: true,
+                },
+                {
+                    label: "Current (A)",
+                    type: "number",
+                    key: "current",
+                    automatic: true,
+                },
+                {
+                    label: "Power (W)",
+                    type: "number",
+                    key: "power",
+                    automatic: true,
                 },
             ],
         };
@@ -42,6 +54,8 @@ class Battery extends Component {
             name: "Battery",
             sourceType: "DC",
             voltage: { value: voltage || 0, automatic: false },
+            current: { value: 0, automatic: true },
+            power: { value: 0, automatic: true },
         };
     }
 }

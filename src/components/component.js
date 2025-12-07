@@ -59,9 +59,9 @@ class Component {
         };
         this.values = {
             name: this.prefix,
-            voltageDrop: { value: 0, automatic: false },
-            current: { value: 0, automatic: false },
-            power: { value: 0, automatic: false },
+            voltageDrop: { value: 0, automatic: true },
+            current: { value: 0, automatic: true },
+            power: { value: 0, automatic: true },
             resistance: { value: 0, automatic: false },
         };
     }
