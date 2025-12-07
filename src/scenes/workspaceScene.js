@@ -260,8 +260,42 @@ export default class WorkspaceScene extends Phaser.Scene {
     new UIButton(this, {
       x: width - 140,
       y: 225,
+      text: 'new_sim',
+      onClick: () => this.sim.generate_tree(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+    window.sim = this.sim; // DEBUGGING PURPOSES
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 275,
       text: 'Formule',
       onClick: () => this.showCalculationFormulas(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 325,
+      text: 'Export',
+      onClick: () => this.exportComponents(),
+      background: {
+        width: 180,
+        height: 45
+      }
+    });
+
+    new UIButton(this, {
+      x: width - 140,
+      y: 375,
+      text: 'Import',
+      onClick: () => this.importComponents(),
       background: {
         width: 180,
         height: 45
@@ -901,6 +935,245 @@ export default class WorkspaceScene extends Phaser.Scene {
     }
     if (this.oscilloscope) {
       this.oscilloscope.clear();
+    }
+  }
+
+  exportComponents() {
+    if (!this.placedComponents || this.placedComponents.length === 0) {
+      alert('Ni komponent za izvoz!');
+      return;
+    }
+
+    const exportData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      components: []
+    };
+
+    this.placedComponents.forEach(visualContainer => {
+      const comp = visualContainer.getData('logicComponent');
+      if (!comp || visualContainer.getData('isInPanel')) return;
+      
+      const componentData = {
+        id: comp.id,
+        type: comp.type,
+        name: comp.name,
+        x: visualContainer.x,
+        y: visualContainer.y,
+        rotation: visualContainer.rotation || 0,
+        start: {
+          id: comp.start.id,
+          x: comp.start.x,
+          y: comp.start.y,
+          wireId: comp.start.wire ? comp.start.wire.id : null
+        },
+        end: {
+          id: comp.end.id,
+          x: comp.end.x,
+          y: comp.end.y,
+          wireId: comp.end.wire ? comp.end.wire.id : null
+        }
+      };
+
+      if (comp.type === 'battery') {
+        componentData.voltage = comp.voltage || 9;
+      } else if (comp.type === 'resistor') {
+        componentData.resistance = comp.resistance || 100;
+      }
+
+      exportData.components.push(componentData);
+    });
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `circuit_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    alert(`Izvoženo ${exportData.components.length} komponent!`);
+  }
+
+  importComponents() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const importData = JSON.parse(event.target.result);
+          
+          if (!importData.components || !Array.isArray(importData.components)) {
+            throw new Error('Invalid file format');
+          }
+
+          this.clearAllComponents();
+          
+          const nodeMap = new Map();
+          const wireMap = new Map();
+          
+          importData.components.forEach(compData => {
+            let visualType;
+            if (compData.type === 'battery') visualType = 'baterija';
+            else if (compData.type === 'resistor') visualType = 'upor';
+            else if (compData.type === 'bulb') visualType = 'svetilka';
+            else if (compData.type === 'switch') visualType = 'stikalo-on';
+            else if (compData.type === 'ammeter' || compData.type === 'ampermeter') visualType = 'ampermeter';
+            else if (compData.type === 'voltmeter') visualType = 'voltmeter';
+            else return;
+            
+            const visualComponent = createComponent(this, compData.x, compData.y, visualType, 0xffffff);
+            const logicComponent = visualComponent.getData('logicComponent');
+            
+            visualComponent.setData('isInPanel', false);
+            
+            if (!window.components) window.components = [];
+            if (!window.components.includes(logicComponent)) {
+              window.components.push(logicComponent);
+            }
+            
+            this.placedComponents.push(visualComponent);
+            
+            this.graph.addComponent(logicComponent);
+            if (logicComponent.start) this.graph.addNode(logicComponent.start);
+            if (logicComponent.end) this.graph.addNode(logicComponent.end);
+            
+            if (compData.rotation) {
+              visualComponent.setRotation(compData.rotation);
+            }
+            
+            this.updateLogicNodePositions(visualComponent);
+            
+            if (compData.type === 'battery' && compData.voltage) {
+              logicComponent.voltage = compData.voltage;
+            } else if (compData.type === 'resistor' && compData.resistance) {
+              logicComponent.resistance = compData.resistance;
+            }
+            
+            const label = visualComponent.getData('displayLabel');
+            if (label && logicComponent.values && logicComponent.values.name) {
+              label.setText(logicComponent.values.name);
+            }
+            
+            nodeMap.set(compData.start.id, logicComponent.start);
+            nodeMap.set(compData.end.id, logicComponent.end);
+          });
+          
+          const wireGroups = new Map();
+          
+          importData.components.forEach(compData => {
+            const startNode = nodeMap.get(compData.start.id);
+            const endNode = nodeMap.get(compData.end.id);
+            
+            if (compData.start.wireId && startNode) {
+              if (!wireGroups.has(compData.start.wireId)) {
+                wireGroups.set(compData.start.wireId, []);
+              }
+              wireGroups.get(compData.start.wireId).push(startNode);
+            }
+            
+            if (compData.end.wireId && endNode) {
+              if (!wireGroups.has(compData.end.wireId)) {
+                wireGroups.set(compData.end.wireId, []);
+              }
+              wireGroups.get(compData.end.wireId).push(endNode);
+            }
+          });
+          
+          wireGroups.forEach((nodes, wireId) => {
+            if (nodes.length < 2) return;
+            
+            const wire = new Wire(nodes[0], nodes[1], this);
+            
+            if (nodes.length > 2) {
+              for (let i = 2; i < nodes.length; i++) {
+                if (!nodes[i].wire) {
+                  wire.addNode(nodes[i]);
+                }
+              }
+            }
+            
+            wireMap.set(wireId, wire);
+          });
+          
+          alert(`Uvoženo ${importData.components.length} komponent!`);
+          
+        } catch (error) {
+          console.error('Import failed:', error);
+          alert('Napaka pri uvozu datoteke!');
+        }
+      };
+      
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  }
+
+  clearAllComponents() {
+    const wiresToDestroy = new Set();
+    
+    if (this.placedComponents && this.placedComponents.length > 0) {
+      const componentsToDestroy = [...this.placedComponents];
+      
+      componentsToDestroy.forEach(visualContainer => {
+        const comp = visualContainer.getData('logicComponent');
+        if (!comp || visualContainer.getData('isInPanel')) return;
+        
+        if (comp.start && comp.start.wire) {
+          wiresToDestroy.add(comp.start.wire);
+        }
+        if (comp.end && comp.end.wire) {
+          wiresToDestroy.add(comp.end.wire);
+        }
+        
+        if (comp.start && comp.start.graphics) {
+          comp.start.graphics.destroy();
+        }
+        
+        if (comp.end && comp.end.graphics) {
+          comp.end.graphics.destroy();
+        }
+        
+        if (this.graph) {
+          if (comp.start) this.graph.nodes.delete(comp.start);
+          if (comp.end) this.graph.nodes.delete(comp.end);
+          if (this.graph.components) {
+            const compIndex = this.graph.components.indexOf(comp);
+            if (compIndex > -1) this.graph.components.splice(compIndex, 1);
+          }
+        }
+        
+        visualContainer.destroy();
+        
+        if (comp.destroy) {
+          comp.destroy();
+        }
+      });
+    }
+    
+    wiresToDestroy.forEach(wire => {
+      if (wire && wire.deleteWire) {
+        wire.deleteWire();
+      }
+    });
+    
+    this.placedComponents = [];
+    
+    if (window.components) {
+      window.components = window.components.filter(comp => {
+        const visualContainer = comp.componentObject;
+        return visualContainer && visualContainer.getData('isInPanel');
+      });
     }
   }
 
