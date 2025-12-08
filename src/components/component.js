@@ -26,7 +26,9 @@ class Component {
         this.debug_color = 0xff0000;
         this.direction = direction;
         this.componentObject = componentObject;
-        this.oscilloscope = null;
+        this.voltMeter = null;
+        this.amperMeter = null;
+        this.wattMeter = null;
         //ui
         this.properties = {
             fields: [
@@ -90,8 +92,9 @@ class Component {
         }, 1000 / measuraments);
     }
     getMeasurament() {
-        if (this.oscilloscope)
-            this.oscilloscope.measure(this.values.voltage.value);
+        if (this.voltmeter) this.voltmeter.measure(this.values.voltage.value);
+        if (this.amperMeter) this.amperMeter.measure(this.values.current.value);
+        if (this.wattMeter) this.wattMeter.measure(this.values.power.value);
     }
     updateMove(workspace, rotate = false) {
         console.log(`Component ${this.id} moved. Updating connected nodes.`);
@@ -103,8 +106,8 @@ class Component {
         console.log(`Destroying component ${this.id}`);
         if (this.start) this.start.destroyNode();
         if (this.end) this.end.destroyNode();
-        this.oscilloscope.destroy();
-        this.oscilloscope = null;
+        if (this.voltmeter) this.voltmeter.destroy();
+        this.voltmeter = null;
     }
 
     updateLogicNodePositions(workspace, rotate) {

@@ -22,6 +22,8 @@ export default class Oscilloscope {
         this.x = config.x;
         this.y = config.y;
         this.name = config.name || "Oscilloscope";
+        this.inputType = config.inputType || "volt"; // 'volt', 'amper', or 'watt'
+
         this.maxMeasurements = config.maxMeasurements || 10;
         this.minVoltage =
             config.minVoltage !== undefined ? config.minVoltage : -5;
@@ -207,12 +209,45 @@ export default class Oscilloscope {
 
     updateDisplay() {
         if (this.measurements.length === 0) {
-            this.displayText.setText("U: 0.00 V");
+            const label = this.getDisplayLabel();
+            const unit = this.getDisplayUnit();
+            this.displayText.setText(`${label}: 0.00 ${unit}`);
             return;
         }
 
-        const currentVoltage = this.measurements[this.measurements.length - 1];
-        this.displayText.setText(`U: ${currentVoltage.toFixed(2)} V`);
+        const currentValue = this.measurements[this.measurements.length - 1];
+        const label = this.getDisplayLabel();
+
+        const unit = this.getDisplayUnit();
+        this.displayText.setText(
+            `${label}: ${currentValue.toFixed(2)} ${unit}`
+        );
+    }
+
+    getDisplayLabel() {
+        switch (this.inputType) {
+            case "volt":
+                return "U";
+            case "amper":
+                return "I";
+            case "watt":
+                return "P";
+            default:
+                return "U";
+        }
+    }
+
+    getDisplayUnit() {
+        switch (this.inputType) {
+            case "volt":
+                return "V";
+            case "amper":
+                return "A";
+            case "watt":
+                return "W";
+            default:
+                return "V";
+        }
     }
 
     drawWaveform() {
@@ -344,6 +379,10 @@ export default class Oscilloscope {
             if (this.nameText) {
                 this.nameText.setText(this.name);
             }
+        }
+        if (newConfig.inputType !== undefined) {
+            this.inputType = newConfig.inputType;
+            this.updateDisplay();
         }
 
         Object.assign(this.config, newConfig);
