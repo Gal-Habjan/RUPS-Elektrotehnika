@@ -118,7 +118,7 @@ class Battery extends Component {
                 );
             this.values.current =
                 this.values.maxCurrent *
-                Math.cos(
+                Math.sin(
                     (Math.PI * this.currentInterval) /
                         ((this.values.clockSpeed * this.values.periodTime) / 2)
                 );
