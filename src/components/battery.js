@@ -44,7 +44,7 @@ class Battery extends Component {
                     label: "Current (A)",
                     type: "number",
                     key: "current",
-                    automatic: false,
+                    automatic: true,
                 },
                 {
                     label: "Power (W)",
