@@ -165,10 +165,15 @@ class CircuitSim {
                     if (!directionalTypes.includes(prevComponent.type)) {break;}
                     // Check which node is shared between previous component and current component
                     let enteredFromStart = false;
+
                     if (prevComponent.type === 'battery') {
-                        if (prevComponent.start.wire && component.start.wire === prevComponent.start.wire) {
+                        if (!this.negativeVoltage && prevComponent.start.wire && component.start.wire === prevComponent.start.wire) {
+                            enteredFromStart = true;
+                        } else if (this.negativeVoltage && prevComponent.end.wire && component.start.wire === prevComponent.end.wire) {
                             enteredFromStart = true;
                         }
+                    } else if ((prevComponent.start.wire && component.start.wire === prevComponent.start.wire) || (prevComponent.end.wire && component.start.wire === prevComponent.end.wire)) {    
+                        enteredFromStart = true;
                     }
                     
                     // If we entered from end node, current flows backwards - component blocks
