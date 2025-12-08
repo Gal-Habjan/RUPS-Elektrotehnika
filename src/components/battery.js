@@ -36,7 +36,6 @@ class Battery extends Component {
                 {
                     label: "Voltage (V)",
                     type: "number",
-
                     key: "maxVoltage",
                     automatic: false,
                 },
@@ -125,7 +124,10 @@ class Battery extends Component {
                 );
             this.currentInterval++;
         }
-        if (this.oscilloscope) this.oscilloscope.measure(this.values.voltage);
+        console.log(this.wattMeter);
+        if (this.voltmeter) this.voltmeter.measure(this.values.voltage);
+        if (this.amperMeter) this.amperMeter.measure(this.values.current);
+        if (this.wattMeter) this.wattMeter.measure(this.values.power.value);
     }
 }
 

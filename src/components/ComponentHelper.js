@@ -481,16 +481,27 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                         if (logic.type == "battery") {
                             logic.startInterval();
                         }
-
-                        if (logic.oscilloscope) {
-                            const maxMeasurements =
-                                logic.type == "battery"
-                                    ? logic.values.shownTime *
-                                      logic.values.clockSpeed *
-                                      logic.values.periodTime
-                                    : logic.values.measuraments *
-                                      logic.values.shownTime;
-                            logic.oscilloscope.updateConfig({
+                        const maxMeasurements =
+                            logic.type == "battery"
+                                ? logic.values.shownTime *
+                                  logic.values.clockSpeed *
+                                  logic.values.periodTime
+                                : logic.values.measuraments *
+                                  logic.values.shownTime;
+                        if (logic.voltmeter) {
+                            logic.voltmeter.updateConfig({
+                                name: logic.values.name,
+                                maxMeasurements: maxMeasurements,
+                            });
+                        }
+                        if (logic.amperMeter) {
+                            logic.amperMeter.updateConfig({
+                                name: logic.values.name,
+                                maxMeasurements: maxMeasurements,
+                            });
+                        }
+                        if (logic.wattmeter) {
+                            logic.wattmeter.updateConfig({
                                 name: logic.values.name,
                                 maxMeasurements: maxMeasurements,
                             });
@@ -531,9 +542,9 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
             onClick: () => {
                 console.log("measureVoltage");
 
-                if (logic.oscilloscope) {
-                    logic.oscilloscope.destroy();
-                    logic.oscilloscope = null;
+                if (logic.voltmeter) {
+                    logic.voltmeter.destroy();
+                    logic.voltmeter = null;
                 } else {
                     const maxMeasurements =
                         logic.type == "battery"
@@ -542,8 +553,9 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                               logic.values.periodTime
                             : logic.values.measuraments *
                               logic.values.shownTime;
-                    const oscilloscope = new Oscilloscope(workspace, {
+                    const voltmeter = new Oscilloscope(workspace, {
                         name: logic.values.name,
+                        inputType: "volt",
                         x: 400,
                         y: 300,
                         width: 300,
@@ -552,7 +564,69 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                         minVoltage: -5,
                         maxVoltage: 5,
                     });
-                    logic.oscilloscope = oscilloscope;
+                    logic.voltmeter = voltmeter;
+                    logic.startInterval();
+                }
+            },
+        },
+        {
+            label: "Measure Current",
+            onClick: () => {
+                if (logic.amperMeter) {
+                    logic.amperMeter.destroy();
+                    logic.amperMeter = null;
+                } else {
+                    const maxMeasurements =
+                        logic.type == "battery"
+                            ? logic.values.shownTime *
+                              logic.values.clockSpeed *
+                              logic.values.periodTime
+                            : logic.values.measuraments *
+                              logic.values.shownTime;
+                    const amperMeter = new Oscilloscope(workspace, {
+                        name: logic.values.name,
+                        inputType: "amper",
+                        x: 400,
+                        y: 300,
+                        width: 300,
+                        height: 200,
+                        maxMeasurements: maxMeasurements,
+                        minVoltage: -5,
+                        maxVoltage: 5,
+                    });
+                    logic.amperMeter = amperMeter;
+                    logic.startInterval();
+                }
+            },
+        },
+        {
+            label: "Measure Power",
+            onClick: () => {
+                console.log("measureVoltage");
+
+                if (logic.wattMeter) {
+                    logic.wattMeter.destroy();
+                    logic.wattMeter = null;
+                } else {
+                    const maxMeasurements =
+                        logic.type == "battery"
+                            ? logic.values.shownTime *
+                              logic.values.clockSpeed *
+                              logic.values.periodTime
+                            : logic.values.measuraments *
+                              logic.values.shownTime;
+                    const wattMeter = new Oscilloscope(workspace, {
+                        name: logic.values.name,
+                        inputType: "watt",
+                        x: 400,
+                        y: 300,
+                        width: 300,
+                        height: 200,
+                        maxMeasurements: maxMeasurements,
+                        minVoltage: -5,
+                        maxVoltage: 5,
+                    });
+                    logic.wattMeter = wattMeter;
                     logic.startInterval();
                 }
             },
