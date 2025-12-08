@@ -1,0 +1,207 @@
+{
+  "version": "2.0",
+  "timestamp": "2025-12-07T21:38:01.159Z",
+  "components": [
+    {
+      "id": "bat_5175",
+      "type": "battery",
+      "x": 840,
+      "y": 160,
+      "rotation": 0,
+      "start": {
+        "id": "bat_5175_start",
+        "x": 800,
+        "y": 160,
+        "wireId": "wire_2134"
+      },
+      "end": {
+        "id": "bat_5175_end",
+        "x": 880,
+        "y": 160,
+        "wireId": "wire_233"
+      },
+      "values": {
+        "name": "Battery",
+        "sourceType": "DC",
+        "maxVoltage": 3.3,
+        "current": {
+          "value": 0,
+          "automatic": true
+        },
+        "power": {
+          "value": 0,
+          "automatic": true
+        },
+        "clockSpeed": 20,
+        "periodTime": 1,
+        "shownTime": 5,
+        "voltage": 3.3
+      },
+      "voltage": 3.3
+    },
+    {
+      "id": "res_8986",
+      "type": "resistor",
+      "x": 720,
+      "y": 280,
+      "rotation": 0,
+      "start": {
+        "id": "res_8986_start",
+        "x": 680,
+        "y": 280,
+        "wireId": "wire_2134"
+      },
+      "end": {
+        "id": "res_8986_end",
+        "x": 760,
+        "y": 280,
+        "wireId": "wire_6915"
+      },
+      "values": {
+        "name": "R2",
+        "resistance": {
+          "value": 100,
+          "automatic": false
+        },
+        "voltage": {
+          "value": 0,
+          "automatic": true
+        },
+        "current": {
+          "value": 0,
+          "automatic": true
+        },
+        "power": {
+          "value": 0,
+          "automatic": true
+        },
+        "measuraments": 20,
+        "shownTime": 5
+      },
+      "resistance": 100
+    },
+    {
+      "id": "res_6816",
+      "type": "resistor",
+      "x": 840,
+      "y": 280,
+      "rotation": 0,
+      "start": {
+        "id": "res_6816_start",
+        "x": 800,
+        "y": 280,
+        "wireId": "wire_6915"
+      },
+      "end": {
+        "id": "res_6816_end",
+        "x": 880,
+        "y": 280,
+        "wireId": "wire_5280"
+      },
+      "values": {
+        "name": "R3",
+        "voltage": {
+          "value": 0,
+          "automatic": true
+        },
+        "current": {
+          "value": 0,
+          "automatic": true
+        },
+        "power": {
+          "value": 0,
+          "automatic": true
+        },
+        "resistance": {
+          "value": 100,
+          "automatic": false
+        },
+        "measuraments": 20,
+        "shownTime": 5
+      },
+      "resistance": 100
+    },
+    {
+      "id": "res_5447",
+      "type": "resistor",
+      "x": 840,
+      "y": 400,
+      "rotation": 0,
+      "start": {
+        "id": "res_5447_start",
+        "x": 800,
+        "y": 400,
+        "wireId": "wire_6915"
+      },
+      "end": {
+        "id": "res_5447_end",
+        "x": 880,
+        "y": 400,
+        "wireId": "wire_5280"
+      },
+      "values": {
+        "name": "R4",
+        "voltage": {
+          "value": 0,
+          "automatic": true
+        },
+        "current": {
+          "value": 0,
+          "automatic": true
+        },
+        "power": {
+          "value": 0,
+          "automatic": true
+        },
+        "resistance": {
+          "value": 100,
+          "automatic": false
+        },
+        "measuraments": 20,
+        "shownTime": 5
+      },
+      "resistance": 100
+    },
+    {
+      "id": "res_6835",
+      "type": "resistor",
+      "x": 960,
+      "y": 280,
+      "rotation": -3.141592653589793,
+      "start": {
+        "id": "res_6835_start",
+        "x": 1000,
+        "y": 280,
+        "wireId": "wire_233"
+      },
+      "end": {
+        "id": "res_6835_end",
+        "x": 920,
+        "y": 280,
+        "wireId": "wire_5280"
+      },
+      "values": {
+        "name": "R5",
+        "voltage": {
+          "value": 0,
+          "automatic": true
+        },
+        "current": {
+          "value": 0,
+          "automatic": true
+        },
+        "power": {
+          "value": 0,
+          "automatic": true
+        },
+        "resistance": {
+          "value": 100,
+          "automatic": false
+        },
+        "measuraments": 20,
+        "shownTime": 5
+      },
+      "resistance": 100
+    }
+  ]
+}

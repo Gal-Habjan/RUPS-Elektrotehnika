@@ -355,7 +355,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     console.log("Adding circles to component:", comp);
     const circleClickColor = 0x535353;
     const startCircleColor = 0xff0000; // Red for start nodes
-    const endCircleColor = 0x0000ff;   // Blue for end nodes
+    const endCircleColor = 0x0000ff; // Blue for end nodes
     const startCircle = workspace.add
         .circle(comp.localStart.x, comp.localStart.y, 5, startCircleColor)
         .setOrigin(0.1, 0.5);
@@ -371,7 +371,8 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     const addCircleInteractivity = (circle, nodeType) => {
         let line = null;
         let isDragging = false;
-        const circleInitColor = nodeType === "start" ? startCircleColor : endCircleColor;
+        const circleInitColor =
+            nodeType === "start" ? startCircleColor : endCircleColor;
 
         circle.setInteractive({ useHandCursor: true });
 
@@ -565,5 +566,23 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
             },
         });
     }
+    items.push({
+        label: "Destroy",
+        onClick: () => {
+            if (logic.type == "battery") {
+                workspace.createNewComponent(
+                    logic.componentObject.getData("originalX"),
+                    logic.componentObject.getData("originalY"),
+                    logic.componentObject.getData("type"),
+                    logic.componentObject.getData("color")
+                );
+
+                workspace.placedComponents.push(logic.componentObject);
+            }
+            logic.destroy();
+            logic.componentObject.destroy();
+            window.components = window.components.filter((c) => c !== logic);
+        },
+    });
     createContextMenu(workspace, worldX, worldY, items);
 }

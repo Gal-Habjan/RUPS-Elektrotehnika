@@ -103,7 +103,7 @@ class Component {
         console.log(`Destroying component ${this.id}`);
         if (this.start) this.start.destroyNode();
         if (this.end) this.end.destroyNode();
-        this.oscilloscope.destroy();
+        if (this.oscilloscope) this.oscilloscope.destroy();
         this.oscilloscope = null;
     }
 

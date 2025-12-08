@@ -36,15 +36,15 @@ class Battery extends Component {
                 {
                     label: "Voltage (V)",
                     type: "number",
-                    automatic: true,
+
                     key: "maxVoltage",
                     automatic: false,
                 },
                 {
                     label: "Current (A)",
                     type: "number",
-                    key: "current",
-                    automatic: true,
+                    key: "maxCurrent",
+                    automatic: false,
                 },
                 {
                     label: "Power (W)",
@@ -76,9 +76,11 @@ class Battery extends Component {
         this.values = {
             name: "Battery",
             sourceType: "DC",
-            voltage: { value: voltage || 0, automatic: false },
-            current: { value: 0, automatic: true },
+            voltage: 3.3,
+            current: 1,
+            maxCurrent: 1,
             power: { value: 0, automatic: true },
+            resistance: { value: 0, automatic: true },
             maxVoltage: 3.3,
             clockSpeed: 20,
             periodTime: 1,
@@ -100,6 +102,7 @@ class Battery extends Component {
         if (this.values.sourceType == "DC") {
             this.currentInterval = 0;
             this.values.voltage = this.values.maxVoltage;
+            this.values.current = this.values.maxCurrent;
         } else {
             // console.log(
             //     this.values.maxVoltage,
@@ -111,6 +114,12 @@ class Battery extends Component {
             this.values.voltage =
                 this.values.maxVoltage *
                 Math.sin(
+                    (Math.PI * this.currentInterval) /
+                        ((this.values.clockSpeed * this.values.periodTime) / 2)
+                );
+            this.values.current =
+                this.values.maxCurrent *
+                Math.cos(
                     (Math.PI * this.currentInterval) /
                         ((this.values.clockSpeed * this.values.periodTime) / 2)
                 );
