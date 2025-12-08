@@ -7,6 +7,7 @@ class CircuitSim {
         this.running_sim = false;
         this.nodeValues = [];
         this.equationList = [];
+        this.negativeVoltage = false;
     }
 
     findSource() {
@@ -33,6 +34,8 @@ class CircuitSim {
         
         if (allPaths.length > 0) {
             this.paths = allPaths;
+            // Check for negative voltage and reverse paths if needed
+            this.checkNegativeVoltage();
         }
     }
     
@@ -190,10 +193,33 @@ class CircuitSim {
         }
     }
 
+    checkNegativeVoltage() {
+        if (!this.source || !this.source.values || this.source.values.voltage === undefined) {
+            this.negativeVoltage = false;
+            return false;
+        }
+        
+        const batteryVoltage = typeof this.source.values.voltage === 'object' 
+            ? this.source.values.voltage.value 
+            : this.source.values.voltage;
+        
+        if (batteryVoltage < 0) {
+            this.negativeVoltage = true;
+            console.log('⚠ Battery voltage is negative, paths will be reversed');
+            // Reverse all paths
+            this.paths = this.paths.map(path => [...path].reverse());
+            return true;
+        }
+        
+        this.negativeVoltage = false;
+        return false;
+    }
+
     run_tick() {
         this.pickActivePaths();
         this.createTreeFromPaths();
         console.log(this.getTreeString());
+        
         this.extractValues();
         console.log(this.getValuesSummary());
         this.poolEquations();
@@ -234,7 +260,7 @@ class CircuitSim {
                         id: component.id,
                         name: component.values.name,
                         type: component.type,
-                        voltage: this.extractValue(component.values.voltageDrop || component.values.voltage),
+                        voltage: Math.abs(this.extractValue(component.values.voltageDrop || component.values.voltage)),
                         current: this.extractValue(component.values.current),
                         power: this.extractValue(component.values.power)
                     }; 
@@ -250,10 +276,14 @@ class CircuitSim {
 
     // Helper to extract value from both direct values and value objects
     extractValue(value) {
-        if (value === undefined || value.automatic) {
+        if (value === undefined) {
             return undefined;
         }
         if (typeof value === 'object' && 'value' in value) {
+            // If it's a value object with automatic flag, check if it's automatic
+            if (value.automatic === true) {
+                return undefined; // Treat automatic values as undefined (need to be calculated)
+            }
             return value.value;
         }
         return value;
@@ -531,6 +561,9 @@ class CircuitSim {
         // Generate Kirchhoff equations for series and parallel circuits
         this.generateKirchhoffEquations(this.tree);
         
+        // Generate parallel current sum equations based on active paths
+        this.generateParallelCurrentSumEquations();
+        
         console.log(`Generated ${this.equationList.length} equations`);
         return this.equationList;
     }
@@ -540,11 +573,15 @@ class CircuitSim {
         
         const processLevel = (items, connectionType) => {
             const componentIds = [];
+            const nestedGroups = [];
             
             items.forEach(item => {
                 if (Array.isArray(item)) {
-                    // Nested array = parallel connection
-                    this.generateKirchhoffEquations(item, 'parallel');
+                    // Nested array = opposite connection type (series->parallel or parallel->series)
+                    const nestedType = connectionType === 'series' ? 'parallel' : 'series';
+                    this.generateKirchhoffEquations(item, nestedType);
+                    // Track nested groups for current/voltage propagation
+                    nestedGroups.push(item);
                 } else if (typeof item === 'string') {
                     const comp = this.nodeValues.find(c => c.id === item);
                     if (comp && comp.type !== 'battery') {
@@ -553,44 +590,210 @@ class CircuitSim {
                 }
             });
             
-            if (componentIds.length > 1) {
-                if (connectionType === 'series') {
+            if (connectionType === 'series') {
+                // For series connection, all components (including those in nested groups) share the same current
+                const allSeriesComponents = [...componentIds];
+                
+                if (allSeriesComponents.length > 1) {
                     // Kirchhoff's current law: same current through all series components
-                    this.equationList.push({
-                        type: 'kcl_series',
-                        equation: `${componentIds.map(id => `${id}.current`).join(' = ')}`,
-                        components: componentIds,
-                        connectionType: 'series'
-                    });
-                    
-                    // Kirchhoff's voltage law: sum of voltages in series
-                    this.equationList.push({
-                        type: 'kvl_series',
-                        equation: `V_total = ${componentIds.map(id => `${id}.voltage`).join(' + ')}`,
-                        components: componentIds,
-                        connectionType: 'series'
-                    });
-                } else if (connectionType === 'parallel') {
-                    // Kirchhoff's voltage law: same voltage across parallel components
-                    this.equationList.push({
-                        type: 'kvl_parallel',
-                        equation: `${componentIds.map(id => `${id}.voltage`).join(' = ')}`,
-                        components: componentIds,
-                        connectionType: 'parallel'
-                    });
-                    
-                    // Kirchhoff's current law: sum of currents in parallel
-                    this.equationList.push({
-                        type: 'kcl_parallel',
-                        equation: `I_total = ${componentIds.map(id => `${id}.current`).join(' + ')}`,
-                        components: componentIds,
-                        connectionType: 'parallel'
+                    // Generate solve equations for each component
+                    allSeriesComponents.forEach((targetId, index) => {
+                        const otherIds = allSeriesComponents.filter((id, i) => i !== index);
+                        
+                        this.equationList.push({
+                            type: 'kcl_series',
+                            equation: `${targetId}.current = ${otherIds[0]}.current`,
+                            solve: (values) => {
+                                // Find any other component with defined current
+                                for (const otherId of otherIds) {
+                                    const otherComp = this.nodeValues.find(c => c.id === otherId);
+                                    if (otherComp && otherComp.current !== undefined) {
+                                        return { current: otherComp.current };
+                                    }
+                                }
+                                return null;
+                            },
+                            component: targetId,
+                            requires: otherIds.map(id => `${id}.current`),
+                            solves: 'current',
+                            connectionType: 'series',
+                            relatedComponents: otherIds
+                        });
                     });
                 }
+            }
+            
+            // Multi-level KCL for parallel branches
+            if (connectionType === 'parallel' && componentIds.length > 0) {
+                // Collect representatives from all parallel branches
+                const branchRepresentatives = [...componentIds];
+                
+                if (branchRepresentatives.length > 1) {
+                    // KCL: Sum of branch currents equals total current
+                    // I_total = I_branch1 + I_branch2 + ...
+                    // Generate solve equations for each branch
+                    branchRepresentatives.forEach((targetId, index) => {
+                        const otherIds = branchRepresentatives.filter((id, i) => i !== index);
+                        
+                        this.equationList.push({
+                            type: 'kcl_parallel',
+                            equation: `${targetId}.current = I_battery - ${otherIds.map(id => `${id}.current`).join(' - ')}`,
+                            solve: (values) => {
+                                // Need battery current and all other branch currents
+                                const battery = this.nodeValues.find(c => c.type === 'battery');
+                                if (!battery || battery.current === undefined) return null;
+                                
+                                let sumOthers = 0;
+                                for (const otherId of otherIds) {
+                                    const otherComp = this.nodeValues.find(c => c.id === otherId);
+                                    if (!otherComp || otherComp.current === undefined) return null;
+                                    sumOthers += otherComp.current;
+                                }
+                                
+                                return { current: battery.current - sumOthers };
+                            },
+                            component: targetId,
+                            requires: ['battery.current', ...otherIds.map(id => `${id}.current`)],
+                            solves: 'current',
+                            connectionType: 'parallel',
+                            isBranchLevel: true,
+                            relatedComponents: otherIds
+                        });
+                    });
+                }
+            }
+            
+            // KVL equations
+            if (connectionType === 'parallel' && componentIds.length > 1) {
+                // Kirchhoff's voltage law: same voltage across parallel components
+                // Generate solve equations for each component
+                componentIds.forEach((targetId, index) => {
+                    const otherIds = componentIds.filter((id, i) => i !== index);
+                    
+                    this.equationList.push({
+                        type: 'kvl_parallel',
+                        equation: `${targetId}.voltage = ${otherIds[0]}.voltage`,
+                        solve: (values) => {
+                            // Find any other component with defined voltage
+                            for (const otherId of otherIds) {
+                                const otherComp = this.nodeValues.find(c => c.id === otherId);
+                                if (otherComp && otherComp.voltage !== undefined) {
+                                    return { voltage: otherComp.voltage };
+                                }
+                            }
+                            return null;
+                        },
+                        component: targetId,
+                        requires: otherIds.map(id => `${id}.voltage`),
+                        solves: 'voltage',
+                        connectionType: 'parallel',
+                        relatedComponents: otherIds
+                    });
+                });
             }
         };
         
         processLevel(Array.isArray(tree) ? tree : [tree], parentType);
+    }
+    
+    // Helper to flatten nested arrays and extract component IDs
+    flattenComponentIds(item) {
+        const ids = [];
+        
+        if (Array.isArray(item)) {
+            item.forEach(subItem => {
+                ids.push(...this.flattenComponentIds(subItem));
+            });
+        } else if (typeof item === 'string') {
+            const comp = this.nodeValues.find(c => c.id === item);
+            if (comp && comp.type !== 'battery') {
+                ids.push(item);
+            }
+        }
+        
+        return ids;
+    }
+
+    // Generate equations that sum parallel branch currents and assign to next component
+    generateParallelCurrentSumEquations() {
+        if (this.activePaths.length < 2) return; // No parallel paths
+        
+        // Find where paths diverge (start of parallel section)
+        let divergeIndex = 0;
+        for (let i = 0; i < Math.min(...this.activePaths.map(p => p.length)); i++) {
+            const firstPathComp = this.activePaths[0][i];
+            if (this.activePaths.every(path => path[i] === firstPathComp)) {
+                divergeIndex = i + 1;
+            } else {
+                break;
+            }
+        }
+        
+        // Find where paths converge (end of parallel section)
+        let convergeIndex = this.activePaths[0].length;
+        for (let i = 1; i <= Math.min(...this.activePaths.map(p => p.length)); i++) {
+            const firstPathComp = this.activePaths[0][this.activePaths[0].length - i];
+            if (this.activePaths.every(path => path[path.length - i] === firstPathComp)) {
+                convergeIndex = this.activePaths[0].length - i;
+            } else {
+                break;
+            }
+        }
+        
+        // Check if there's actually a parallel section
+        if (divergeIndex >= convergeIndex) return;
+        
+        // Get the component right after the parallel section (where currents merge)
+        const componentAfterParallel = this.activePaths[0][convergeIndex];
+        if (!componentAfterParallel) return;
+        
+        const afterComp = this.nodeValues.find(c => c.id === componentAfterParallel);
+        if (!afterComp || afterComp.type === 'battery') return;
+        
+        // Collect first component from each parallel branch
+        const branchComponents = [];
+        for (const path of this.activePaths) {
+            if (divergeIndex < path.length) {
+                const branchCompId = path[divergeIndex];
+                const branchComp = this.nodeValues.find(c => c.id === branchCompId);
+                if (branchComp && branchComp.type !== 'battery') {
+                    branchComponents.push(branchCompId);
+                }
+            }
+        }
+        
+        if (branchComponents.length < 2) return;
+        
+        // Generate equation: current after parallel = sum of all branch currents
+        this.equationList.push({
+            type: 'kcl_parallel_sum',
+            equation: `${componentAfterParallel}.current = ${branchComponents.map(id => `${id}.current`).join(' + ')}`,
+            solve: (values) => {
+                // Sum all branch currents
+                let totalCurrent = 0;
+                let hasAllCurrents = true;
+                
+                for (const branchId of branchComponents) {
+                    const branchComp = this.nodeValues.find(c => c.id === branchId);
+                    if (!branchComp || branchComp.current === undefined) {
+                        hasAllCurrents = false;
+                        break;
+                    }
+                    totalCurrent += branchComp.current;
+                }
+                
+                if (hasAllCurrents) {
+                    return { current: totalCurrent };
+                }
+                return null;
+            },
+            component: componentAfterParallel,
+            requires: branchComponents.map(id => `${id}.current`),
+            solves: 'current',
+            branchComponents: branchComponents
+        });
+        
+        console.log(`Generated parallel sum equation: ${afterComp.name}.current = sum of ${branchComponents.length} branches`);
     }
 
     solvePool() {
@@ -627,7 +830,8 @@ class CircuitSim {
             console.log(`\n--- Iteration ${iterations} ---`);
             
             // Try to solve each equation
-            for (const eq of this.equationList) {
+            for (let eqIndex = 0; eqIndex < this.equationList.length; eqIndex++) {
+                const eq = this.equationList[eqIndex];
                 if (!eq.solve || !eq.component) continue;
                 
                 // Get the component's current values
@@ -648,22 +852,43 @@ class CircuitSim {
                     // Mark variable as defined
                     definedVariables.add(varName);
                     
-                    console.log(`✓ Solved ${eq.type} for ${comp.name}: ${eq.solves} = ${result[eq.solves]}`);
+                    console.log(`✓ Solved ${eq.type} (eq#${eqIndex}) for ${comp.name}: ${eq.solves} = ${result[eq.solves]}`);
+                    console.log(`  Equation: ${eq.equation}`);
                     console.log(`  Defined: ${varName}`);
                     changesMade = true;
                 }
             }
             
-            // Apply Kirchhoff's laws and track new definitions
-            const kirchhoffChanges = this.applyKirchhoffLaws(definedVariables);
+            // Apply Kirchhoff's laws (only KVL series needs special handling for reference voltage)
+            const kirchhoffChanges = this.applyKVLSeries(definedVariables);
             changesMade = kirchhoffChanges || changesMade;
+            
+            // Try to calculate voltages directly from active paths
+            const pathVoltageChanges = this.calculateVoltagesFromPaths(definedVariables);
+            changesMade = pathVoltageChanges || changesMade;
         }
         
         console.log(`\nSolver completed in ${iterations} iterations`);
         console.log('All defined variables:', Array.from(definedVariables).sort());
         
-        // List remaining undefined variables
-        const stillUndefined = this.listUndefinedVariables();
+        // Check which variables are still undefined by comparing with initial extraction
+        const allPossibleVars = [];
+        this.nodeValues.forEach(comp => {
+            if (comp.type !== 'battery' && comp.resistance === undefined) {
+                allPossibleVars.push(`${comp.id}.resistance`);
+            }
+            if (comp.voltage === undefined) {
+                allPossibleVars.push(`${comp.id}.voltage`);
+            }
+            if (comp.current === undefined) {
+                allPossibleVars.push(`${comp.id}.current`);
+            }
+            if (comp.power === undefined) {
+                allPossibleVars.push(`${comp.id}.power`);
+            }
+        });
+        
+        const stillUndefined = allPossibleVars.filter(v => !definedVariables.has(v));
         if (stillUndefined.length > 0) {
             console.warn('Still undefined:', stillUndefined);
         } else {
@@ -676,11 +901,19 @@ class CircuitSim {
         return this.nodeValues;
     }
     
-    applyKirchhoffLaws(definedVariables) {
+    applyKVLSeries(definedVariables) {
+        // Special handling for KVL series: sum of voltages must equal reference voltage
+        // This can't be expressed as a simple solve() function because it needs to find
+        // the reference voltage (either battery or parallel sibling)
         let changesMade = false;
         
-        for (const eq of this.equationList) {
-            if (!eq.components || !eq.connectionType) continue;
+        const seriesEquations = this.equationList.filter(eq => eq.type === 'kvl_series');
+        
+        for (const eq of seriesEquations) {
+            if (!eq.components) continue;
+            
+            // Find equation index for logging
+            const eqIndex = this.equationList.indexOf(eq);
             
             const components = eq.components.map(id => 
                 this.nodeValues.find(c => c.id === id)
@@ -688,147 +921,316 @@ class CircuitSim {
             
             if (components.length < 2) continue;
             
-            if (eq.type === 'kcl_series') {
-                // Same current through all series components
-                // Find first defined current
-                const definedCurrent = components.find(c => c.current !== undefined);
-                if (definedCurrent) {
-                    components.forEach(comp => {
-                        const varName = `${comp.id}.current`;
-                        if (!definedVariables.has(varName)) {
-                            comp.current = definedCurrent.current;
-                            definedVariables.add(varName);
-                            console.log(`✓ KCL Series: ${comp.name}.current = ${definedCurrent.current}A`);
-                            console.log(`  Defined: ${varName}`);
-                            changesMade = true;
-                        }
-                    });
-                }
-            }
+            // Find reference voltage for this series group
+            let referenceVoltage = null;
+            let referenceSource = 'battery';
             
-            if (eq.type === 'kvl_parallel') {
-                // Same voltage across all parallel components
-                // Find first defined voltage
-                const definedVoltage = components.find(c => c.voltage !== undefined);
-                if (definedVoltage) {
-                    components.forEach(comp => {
-                        const varName = `${comp.id}.voltage`;
-                        if (!definedVariables.has(varName)) {
-                            comp.voltage = definedVoltage.voltage;
-                            definedVariables.add(varName);
-                            console.log(`✓ KVL Parallel: ${comp.name}.voltage = ${definedVoltage.voltage}V`);
-                            console.log(`  Defined: ${varName}`);
-                            changesMade = true;
-                        }
-                    });
-                } else {
-                    // No voltage defined yet, but we can calculate from battery and series components
-                    const battery = this.nodeValues.find(c => c.type === 'battery');
-                    if (battery && battery.voltage !== undefined) {
-                        // Find all components in series (not in this parallel group)
-                        const seriesComponents = this.nodeValues.filter(c => 
-                            c.type !== 'battery' && 
-                            !components.some(pc => pc.id === c.id) &&
-                            c.voltage !== undefined
-                        );
-                        
-                        if (seriesComponents.length > 0) {
-                            const sumSeries = seriesComponents.reduce((sum, c) => sum + c.voltage, 0);
-                            const parallelVoltage = battery.voltage - sumSeries;
-                            
-                            if (parallelVoltage > 0) {
-                                components.forEach(comp => {
-                                    const varName = `${comp.id}.voltage`;
-                                    if (!definedVariables.has(varName)) {
-                                        comp.voltage = parallelVoltage;
-                                        definedVariables.add(varName);
-                                        console.log(`✓ KVL Parallel (calculated): ${comp.name}.voltage = ${parallelVoltage}V (${battery.voltage}V - ${sumSeries}V from series)`);
-                                        console.log(`  Defined: ${varName}`);
-                                        changesMade = true;
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (eq.type === 'kvl_series') {
-                // Sum of voltages in series equals total voltage: V_battery = V1 + V2 + V3 + ...
+            // First, check if this series group is part of a parallel structure
+            // If so, use the parallel sibling's voltage as reference
+            const parallelSiblingVoltage = this.getParallelSiblingVoltageFromPaths(eq.components);
+            if (parallelSiblingVoltage !== null) {
+                referenceVoltage = parallelSiblingVoltage;
+                referenceSource = 'parallel sibling';
+            } else {
+                // Otherwise, use battery voltage as reference for series calculations
                 const battery = this.nodeValues.find(c => c.type === 'battery');
                 if (battery && battery.voltage !== undefined) {
-                    const knownVoltages = components.filter(c => c.voltage !== undefined);
-                    const unknownVoltages = components.filter(c => c.voltage === undefined);
-                    
-                    // If only one unknown, calculate it directly
-                    if (unknownVoltages.length === 1 && knownVoltages.length > 0) {
-                        const sumKnown = knownVoltages.reduce((sum, c) => sum + c.voltage, 0);
-                        const remaining = battery.voltage - sumKnown;
-                        const varName = `${unknownVoltages[0].id}.voltage`;
-                        unknownVoltages[0].voltage = remaining;
-                        definedVariables.add(varName);
-                        console.log(`✓ KVL Series: ${unknownVoltages[0].name}.voltage = ${remaining}V (${battery.voltage}V - ${sumKnown}V)`);
-                        console.log(`  Defined: ${varName}`);
-                        changesMade = true;
-                    }
-                    // If multiple unknowns but they're in parallel with each other, they have equal voltages
-                    else if (unknownVoltages.length > 1) {
-                        // Check if unknown components are parallel to each other
-                        const parallelEqs = this.equationList.filter(e => 
-                            e.type === 'kvl_parallel' && 
-                            e.components && 
-                            unknownVoltages.some(u => e.components.includes(u.id))
-                        );
-                        
-                        for (const parallelEq of parallelEqs) {
-                            const parallelUnknowns = unknownVoltages.filter(u => 
-                                parallelEq.components.includes(u.id)
-                            );
-                            
-                            if (parallelUnknowns.length > 1) {
-                                // These components are in parallel, so they share voltage
-                                const sumKnown = knownVoltages.reduce((sum, c) => sum + c.voltage, 0);
-                                // Total remaining voltage divided by number of parallel branches
-                                const remaining = (battery.voltage - sumKnown) / parallelUnknowns.length;
-                                
-                                parallelUnknowns.forEach(comp => {
-                                    const varName = `${comp.id}.voltage`;
-                                    if (!definedVariables.has(varName)) {
-                                        comp.voltage = remaining;
-                                        definedVariables.add(varName);
-                                        console.log(`✓ KVL Series+Parallel: ${comp.name}.voltage = ${remaining}V (equal parallel voltages)`);
-                                        console.log(`  Defined: ${varName}`);
-                                        changesMade = true;
-                                    }
-                                });
-                            }
-                        }
-                    }
+                    referenceVoltage = battery.voltage;
+                    referenceSource = 'battery';
                 }
             }
             
-            if (eq.type === 'kcl_parallel') {
-                // Sum of currents in parallel equals total current
-                const battery = this.nodeValues.find(c => c.type === 'battery');
-                if (battery && battery.current !== undefined) {
-                    const knownCurrents = components.filter(c => c.current !== undefined);
-                    const unknownCurrents = components.filter(c => c.current === undefined);
+            if (referenceVoltage !== null) {
+                const knownVoltages = components.filter(c => c.voltage !== undefined);
+                const unknownVoltages = components.filter(c => c.voltage === undefined);
+                
+                // If only one unknown, calculate it
+                if (unknownVoltages.length === 1 && knownVoltages.length > 0) {
+                    // For each known component, check if it represents a nested parallel structure
+                    // If it does, use the parallel section's total voltage instead
+                    let sumKnown = 0;
                     
-                    if (unknownCurrents.length === 1 && knownCurrents.length > 0) {
-                        const sumKnown = knownCurrents.reduce((sum, c) => sum + c.current, 0);
-                        const remaining = battery.current - sumKnown;
-                        const varName = `${unknownCurrents[0].id}.current`;
-                        unknownCurrents[0].current = remaining;
-                        definedVariables.add(varName);
-                        console.log(`✓ KCL Parallel: ${unknownCurrents[0].name}.current = ${remaining}A`);
-                        console.log(`  Defined: ${varName}`);
-                        changesMade = true;
+                    for (const knownComp of knownVoltages) {
+                        // Check if this component is a representative of a parallel section
+                        // by seeing if referenceSource is NOT 'parallel sibling' (meaning this is the outer series)
+                        if (referenceSource !== 'parallel sibling') {
+                            const nestedVoltage = this.getEffectiveVoltageFromPaths(knownComp.id);
+                            sumKnown += nestedVoltage !== null ? nestedVoltage : knownComp.voltage;
+                        } else {
+                            // This is a series within a parallel section, just use the component's voltage
+                            sumKnown += knownComp.voltage;
+                        }
                     }
+                    
+                    const remaining = referenceVoltage - sumKnown;
+                    const varName = `${unknownVoltages[0].id}.voltage`;
+                    unknownVoltages[0].voltage = Math.max(0, remaining);
+                    definedVariables.add(varName);
+                    console.log(`✓ KVL Series (eq#${eqIndex}): ${unknownVoltages[0].name}.voltage = ${unknownVoltages[0].voltage}V (${referenceVoltage}V from ${referenceSource} - ${sumKnown}V)`);
+                    console.log(`  Equation: ${eq.equation}`);
+                    console.log(`  Defined: ${varName}`);
+                    changesMade = true;
                 }
             }
         }
         
         return changesMade;
+    }
+    
+    // Calculate voltages for all components based on active paths
+    calculateVoltagesFromPaths(definedVariables) {
+        let changesMade = false;
+        
+        if (this.activePaths.length === 0) return false;
+        
+        // Get battery voltage as reference
+        const battery = this.nodeValues.find(c => c.type === 'battery');
+        if (!battery || battery.voltage === undefined) return false;
+        
+        const batteryVoltage = battery.voltage;
+        
+        // Find where paths diverge (start of parallel section)
+        let divergeIndex = 0;
+        if (this.activePaths.length > 1) {
+            for (let i = 0; i < Math.min(...this.activePaths.map(p => p.length)); i++) {
+                const firstPathComp = this.activePaths[0][i];
+                if (this.activePaths.every(path => path[i] === firstPathComp)) {
+                    divergeIndex = i + 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        // Find where paths converge (end of parallel section)
+        let convergeIndex = this.activePaths[0].length;
+        if (this.activePaths.length > 1) {
+            for (let i = 1; i <= Math.min(...this.activePaths.map(p => p.length)); i++) {
+                const firstPathComp = this.activePaths[0][this.activePaths[0].length - i];
+                if (this.activePaths.every(path => path[path.length - i] === firstPathComp)) {
+                    convergeIndex = this.activePaths[0].length - i;
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        console.log(`[Path Voltage Calc] Diverge at index ${divergeIndex}, converge at index ${convergeIndex}`);
+        
+        // For each path, calculate voltages
+        for (const path of this.activePaths) {
+            // Skip battery at start and end
+            let totalCalculatedVoltage = 0;
+            const componentsToCalculate = [];
+            
+            for (let i = 1; i < path.length - 1; i++) {
+                const compId = path[i];
+                const comp = this.nodeValues.find(c => c.id === compId);
+                if (!comp) continue;
+                
+                const varName = `${comp.id}.voltage`;
+                
+                // Check if in parallel section
+                const isInParallelSection = (divergeIndex < convergeIndex) && (i >= divergeIndex && i < convergeIndex);
+                
+                if (comp.voltage !== undefined) {
+                    totalCalculatedVoltage += comp.voltage;
+                } else {
+                    componentsToCalculate.push({ comp, varName, isInParallelSection });
+                }
+            }
+            
+            // If all components in path have voltage except one, calculate it
+            if (componentsToCalculate.length === 1) {
+                const { comp, varName, isInParallelSection } = componentsToCalculate[0];
+                
+                // Calculate remaining voltage
+                let referenceVoltage = batteryVoltage;
+                
+                // If this is a parallel section, check sibling paths for reference
+                if (isInParallelSection && this.activePaths.length > 1) {
+                    for (const siblingPath of this.activePaths) {
+                        if (siblingPath === path) continue;
+                        
+                        let siblingVoltage = 0;
+                        let hasAllVoltages = true;
+                        
+                        for (let i = divergeIndex; i < convergeIndex && i < siblingPath.length; i++) {
+                            const sibCompId = siblingPath[i];
+                            const sibComp = this.nodeValues.find(c => c.id === sibCompId);
+                            if (!sibComp || sibComp.voltage === undefined) {
+                                hasAllVoltages = false;
+                                break;
+                            }
+                            siblingVoltage += sibComp.voltage;
+                        }
+                        
+                        if (hasAllVoltages) {
+                            referenceVoltage = siblingVoltage;
+                            console.log(`[Path Voltage Calc] Using sibling voltage ${siblingVoltage}V as reference for ${comp.name}`);
+                            break;
+                        }
+                    }
+                }
+                
+                const calculatedVoltage = Math.max(0, referenceVoltage - totalCalculatedVoltage);
+                comp.voltage = calculatedVoltage;
+                definedVariables.add(varName);
+                console.log(`✓ Path Voltage Calc: ${comp.name}.voltage = ${calculatedVoltage}V (${referenceVoltage}V - ${totalCalculatedVoltage}V)`);
+                console.log(`  Defined: ${varName}`);
+                changesMade = true;
+            }
+        }
+        
+        return changesMade;
+    }
+    
+    // Helper function to get the effective voltage for a component using activePaths
+    // If the component is part of a parallel section, return the voltage across that section
+    getEffectiveVoltageFromPaths(componentId) {
+        // Find all paths that contain this component
+        const pathsWithComponent = this.activePaths.filter(path => path.includes(componentId));
+        
+        if (pathsWithComponent.length === 0) return null;
+        
+        // If component appears in multiple paths, it's part of a parallel section
+        if (pathsWithComponent.length > 1) {
+            // Find the path containing this component
+            const pathWithComp = pathsWithComponent[0];
+            
+            // Get the position of the component in its path
+            const compIndex = pathWithComp.indexOf(componentId);
+            
+            // Find components in the same parallel section (same position in different paths)
+            // by finding where paths diverge and converge
+            
+            // Find where parallel section starts (where paths diverge)
+            let divergeIndex = 0;
+            for (let i = 0; i < Math.min(...pathsWithComponent.map(p => p.length)); i++) {
+                const firstPathComp = pathsWithComponent[0][i];
+                if (pathsWithComponent.every(path => path[i] === firstPathComp)) {
+                    divergeIndex = i + 1; // Diverge after this common component
+                } else {
+                    break;
+                }
+            }
+            
+            // Find where parallel section ends (where paths converge)
+            let convergeIndex = pathWithComp.length;
+            for (let i = 1; i <= Math.min(...pathsWithComponent.map(p => p.length)); i++) {
+                const firstPathComp = pathsWithComponent[0][pathsWithComponent[0].length - i];
+                if (pathsWithComponent.every(path => path[path.length - i] === firstPathComp)) {
+                    convergeIndex = pathWithComp.length - i;
+                } else {
+                    break;
+                }
+            }
+            
+            // Check if our component is in the parallel section
+            if (compIndex >= divergeIndex && compIndex < convergeIndex) {
+                // Component is in a parallel section
+                // Get the total voltage across this component's branch in the parallel section
+                let branchVoltage = 0;
+                let hasAllVoltages = true;
+                
+                for (let i = divergeIndex; i < convergeIndex; i++) {
+                    const compId = pathWithComp[i];
+                    const comp = this.nodeValues.find(c => c.id === compId);
+                    if (!comp || comp.voltage === undefined) {
+                        hasAllVoltages = false;
+                        break;
+                    }
+                    branchVoltage += comp.voltage;
+                }
+                
+                return hasAllVoltages ? branchVoltage : null;
+            }
+        }
+        
+        // Component is not in a parallel section, just return its voltage
+        const comp = this.nodeValues.find(c => c.id === componentId);
+        return comp && comp.voltage !== undefined ? comp.voltage : null;
+    }
+    
+    // Helper function to find parallel sibling voltage using activePaths
+    getParallelSiblingVoltageFromPaths(seriesComponentIds) {
+        if (!seriesComponentIds || seriesComponentIds.length === 0) return null;
+        
+        // Find the path containing these series components (all of them must be in sequence)
+        const pathWithComponents = this.activePaths.find(path => {
+            // Check if all series components are in this path in sequence
+            const firstIndex = path.indexOf(seriesComponentIds[0]);
+            if (firstIndex === -1) return false;
+            
+            // Check if all components appear consecutively
+            for (let i = 0; i < seriesComponentIds.length; i++) {
+                if (path[firstIndex + i] !== seriesComponentIds[i]) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        
+        if (!pathWithComponents) return null;
+        
+        // Find all paths (potential parallel siblings)
+        const allPaths = this.activePaths;
+        
+        if (allPaths.length < 2) return null; // No parallel paths
+        
+        // Get the position of the first series component in its path
+        const firstCompIndex = pathWithComponents.indexOf(seriesComponentIds[0]);
+        const lastCompIndex = firstCompIndex + seriesComponentIds.length - 1;
+        
+        // Find where parallel section starts (where paths diverge)
+        let divergeIndex = 0;
+        for (let i = 0; i < Math.min(...allPaths.map(p => p.length)); i++) {
+            const firstPathComp = allPaths[0][i];
+            if (allPaths.every(path => path[i] === firstPathComp)) {
+                divergeIndex = i + 1;
+            } else {
+                break;
+            }
+        }
+        
+        // Find where parallel section ends (where paths converge)
+        let convergeIndex = pathWithComponents.length;
+        for (let i = 1; i <= Math.min(...allPaths.map(p => p.length)); i++) {
+            const firstPathComp = allPaths[0][allPaths[0].length - i];
+            if (allPaths.every(path => path[path.length - i] === firstPathComp)) {
+                convergeIndex = pathWithComponents.length - i;
+            } else {
+                break;
+            }
+        }
+        
+        // Check if our components are in a parallel section
+        if (firstCompIndex >= divergeIndex && lastCompIndex < convergeIndex) {
+            // Find a sibling path (different path in the parallel section)
+            for (const siblingPath of allPaths) {
+                if (siblingPath === pathWithComponents) continue;
+                
+                // Calculate total voltage across the sibling branch
+                let siblingVoltage = 0;
+                let hasAllVoltages = true;
+                
+                for (let i = divergeIndex; i < convergeIndex && i < siblingPath.length; i++) {
+                    const compId = siblingPath[i];
+                    const comp = this.nodeValues.find(c => c.id === compId);
+                    if (!comp || comp.voltage === undefined) {
+                        hasAllVoltages = false;
+                        break;
+                    }
+                    siblingVoltage += comp.voltage;
+                }
+                
+                if (hasAllVoltages) {
+                    return siblingVoltage;
+                }
+            }
+        }
+        
+        return null;
     }
     
     crossValidate() {
@@ -876,14 +1278,40 @@ class CircuitSim {
         console.log('\n=== Updating component values ===');
         let updateCount = 0;
         
+        // First, propagate values from equivalent components back to original components
+        this.nodeValues.forEach(equiv => {
+            if (equiv.type === 'equivalent' && equiv.originalComponents) {
+                if (equiv.connectionType === 'series') {
+                    // Series: same current through all, voltages add up
+                    if (equiv.current !== undefined) {
+                        equiv.originalComponents.forEach(comp => {
+                            comp.current = equiv.current;
+                        });
+                    }
+                } else if (equiv.connectionType === 'parallel') {
+                    // Parallel: same voltage across all, currents add up
+                    if (equiv.voltage !== undefined) {
+                        equiv.originalComponents.forEach(comp => {
+                            comp.voltage = equiv.voltage;
+                        });
+                    }
+                }
+            }
+        });
+        
         // Update each component with solved values
         this.nodeValues.forEach(nodeValue => {
+            // Skip equivalent components (they're virtual)
+            if (nodeValue.type === 'equivalent') return;
+            
             const component = window.components.find(c => c.id === nodeValue.id);
             
             if (!component || !component.values) {
                 console.warn(`Component ${nodeValue.id} not found`);
                 return;
             }
+            
+            let updatedFields = [];
             
             // Update resistance
             if (nodeValue.resistance !== undefined && component.type !== 'battery') {
@@ -892,24 +1320,38 @@ class CircuitSim {
                 } else {
                     component.values.resistance = nodeValue.resistance;
                 }
+                updatedFields.push('R');
                 updateCount++;
             }
             
             // Update voltage (voltageDrop for most components, voltage for battery)
             if (nodeValue.voltage !== undefined) {
+                // If battery voltage was originally negative, reverse all voltages
+                const voltageValue = this.negativeVoltage ? -nodeValue.voltage : nodeValue.voltage;
+                
                 if (component.type === 'battery') {
                     if (typeof component.values.voltage === 'object') {
-                        component.values.voltage.value = nodeValue.voltage;
+                        component.values.voltage.value = voltageValue;
                     } else {
-                        component.values.voltage = nodeValue.voltage;
+                        component.values.voltage = voltageValue;
                     }
                 } else {
-                    if (typeof component.values.voltageDrop === 'object') {
-                        component.values.voltageDrop.value = nodeValue.voltage;
-                    } else {
-                        component.values.voltageDrop = nodeValue.voltage;
+                    // For non-battery components, update voltageDrop or voltage
+                    if (component.values.voltageDrop !== undefined) {
+                        if (typeof component.values.voltageDrop === 'object') {
+                            component.values.voltageDrop.value = voltageValue;
+                        } else {
+                            component.values.voltageDrop = voltageValue;
+                        }
+                    } else if (component.values.voltage !== undefined) {
+                        if (typeof component.values.voltage === 'object') {
+                            component.values.voltage.value = voltageValue;
+                        } else {
+                            component.values.voltage = voltageValue;
+                        }
                     }
                 }
+                updatedFields.push('V');
                 updateCount++;
             }
             
@@ -920,6 +1362,7 @@ class CircuitSim {
                 } else {
                     component.values.current = nodeValue.current;
                 }
+                updatedFields.push('I');
                 updateCount++;
             }
             
@@ -930,14 +1373,15 @@ class CircuitSim {
                 } else {
                     component.values.power = nodeValue.power;
                 }
+                updatedFields.push('P');
                 updateCount++;
             }
             
-            console.log(`✓ Updated ${component.values.name}:`, {
-                R: nodeValue.resistance ? `${nodeValue.resistance}Ω` : '-',
-                V: nodeValue.voltage ? `${nodeValue.voltage}V` : '-',
-                I: nodeValue.current ? `${nodeValue.current}A` : '-',
-                P: nodeValue.power ? `${nodeValue.power}W` : '-'
+            console.log(`✓ Updated ${component.values.name} [${updatedFields.join(', ')}]:`, {
+                R: nodeValue.resistance !== undefined ? `${nodeValue.resistance}Ω` : '-',
+                V: nodeValue.voltage !== undefined ? `${nodeValue.voltage}V` : '-',
+                I: nodeValue.current !== undefined ? `${nodeValue.current}A` : '-',
+                P: nodeValue.power !== undefined ? `${nodeValue.power}W` : '-'
             });
         });
         
