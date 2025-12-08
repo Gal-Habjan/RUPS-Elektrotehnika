@@ -10,6 +10,8 @@ import { Resistor } from "../components/resistor";
 import { ComponentDirection } from "./ComponentDirection.js";
 import { createContextMenu } from "../ui/ContextMenu.js";
 import { openPropertiesPanel } from "../ui/PropertiesPanel.js";
+import Oscilloscope from "../ui/Oscilloscope";
+
 export function createComponent(workspace, x, y, type, color, wireGraphics) {
     const component = workspace.add.container(x, y);
 
@@ -258,9 +260,21 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
         if (isInPanel && !component.getData("isInPanel")) {
             // če je ob strani, se odstrani
             const comp = component.getData("logicComponent");
+            if (comp.type == "battery") {
+                workspace.createNewComponent(
+                    component.getData("originalX"),
+                    component.getData("originalY"),
+                    component.getData("type"),
+                    component.getData("color")
+                );
+
+                workspace.placedComponents.push(component);
+            }
             comp.destroy();
             component.destroy();
-            window.components = window.components.filter(c => c !== component.getData("logicComponent"));
+            window.components = window.components.filter(
+                (c) => c !== component.getData("logicComponent")
+            );
         } else if (!isInPanel && component.getData("isInPanel")) {
             // s strani na mizo
             const snapped = workspace.snapToGrid(component.x, component.y);
@@ -282,35 +296,20 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
             component.setData("isRotated", false);
             component.setData("isInPanel", false);
 
-            // assign a display name based on the component class static counter
-            if (comp && comp.constructor) {
-                // update the label that was created for this visual component
-                if (
-                    typeof label !== "undefined" &&
-                    label &&
-                    typeof label.setText === "function"
-                ) {
-                    try {
-                        label.setText(comp.values.name);
-                    } catch (e) {
-                        console.warn("Failed to set label text", e);
-                    }
-                } else {
-                    console.warn(
-                        "Label not found or not editable for component",
-                        comp.id
-                    );
-                }
-            }
+            label.setText(comp.values.name);
 
-            workspace.createNewComponent(
-                component.getData("originalX"),
-                component.getData("originalY"),
-                component.getData("type"),
-                component.getData("color")
-            );
-
+            // Always add component to placedComponents (including battery)
             workspace.placedComponents.push(component);
+
+            // Create new component in panel for non-battery components
+            if (comp.type != "battery") {
+                workspace.createNewComponent(
+                    component.getData("originalX"),
+                    component.getData("originalY"),
+                    component.getData("type"),
+                    component.getData("color")
+                );
+            }
         } else if (!component.getData("isInPanel")) {
             // na mizi in se postavi na mrežo
             const snapped = workspace.snapToGrid(component.x, component.y);
@@ -355,11 +354,13 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     // Add circles at start and end nodes
     console.log("Adding circles to component:", comp);
     const circleClickColor = 0x535353;
+    const startCircleColor = 0xff0000; // Red for start nodes
+    const endCircleColor = 0x0000ff;   // Blue for end nodes
     const startCircle = workspace.add
-        .circle(comp.localStart.x, comp.localStart.y, 5, 0xff0000)
+        .circle(comp.localStart.x, comp.localStart.y, 5, startCircleColor)
         .setOrigin(0.1, 0.5);
     const endCircle = workspace.add
-        .circle(comp.localEnd.x, comp.localEnd.y, 5, 0x0000ff)
+        .circle(comp.localEnd.x, comp.localEnd.y, 5, endCircleColor)
         .setOrigin(0.8, 0.5);
 
     // Add the circles to the component container
@@ -370,6 +371,7 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     const addCircleInteractivity = (circle, nodeType) => {
         let line = null;
         let isDragging = false;
+        const circleInitColor = nodeType === "start" ? startCircleColor : endCircleColor;
 
         circle.setInteractive({ useHandCursor: true });
 
@@ -473,6 +475,25 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                         const label = compObj.getData("displayLabel");
                         label.setText(values.name);
                         logicComp.values = values;
+                        console.log(values);
+
+                        if (logic.type == "battery") {
+                            logic.startInterval();
+                        }
+
+                        if (logic.oscilloscope) {
+                            const maxMeasurements =
+                                logic.type == "battery"
+                                    ? logic.values.shownTime *
+                                      logic.values.clockSpeed *
+                                      logic.values.periodTime
+                                    : logic.values.measuraments *
+                                      logic.values.shownTime;
+                            logic.oscilloscope.updateConfig({
+                                name: logic.values.name,
+                                maxMeasurements: maxMeasurements,
+                            });
+                        }
                     },
                     () => {
                         // cancelled
@@ -501,6 +522,37 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                         logic.start.wire.removeNode(logic.start);
                     if (logic.end && logic.end.wire)
                         logic.end.wire.removeNode(logic.end);
+                }
+            },
+        },
+        {
+            label: "Measure Voltage",
+            onClick: () => {
+                console.log("measureVoltage");
+
+                if (logic.oscilloscope) {
+                    logic.oscilloscope.destroy();
+                    logic.oscilloscope = null;
+                } else {
+                    const maxMeasurements =
+                        logic.type == "battery"
+                            ? logic.values.shownTime *
+                              logic.values.clockSpeed *
+                              logic.values.periodTime
+                            : logic.values.measuraments *
+                              logic.values.shownTime;
+                    const oscilloscope = new Oscilloscope(workspace, {
+                        name: logic.values.name,
+                        x: 400,
+                        y: 300,
+                        width: 300,
+                        height: 200,
+                        maxMeasurements: maxMeasurements,
+                        minVoltage: -5,
+                        maxVoltage: 5,
+                    });
+                    logic.oscilloscope = oscilloscope;
+                    logic.startInterval();
                 }
             },
         },

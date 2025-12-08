@@ -1,15 +1,18 @@
-import Phaser from 'phaser';
-import LabScene from './labScene';
-import { Battery } from '../components/battery';
-import { Bulb } from '../components/bulb';
-import { Wire } from '../components/wire';
-import { CircuitGraph } from '../logic/circuit_graph';
-import { Node } from '../logic/node';
-import { Switch } from '../components/switch';
-import { Resistor } from '../components/resistor';
-import UIButton from '../ui/UIButton';
-import Oscilloscope from '../ui/Oscilloscope';
-import { createComponent,openComponentContextMenu } from "../components/ComponentHelper";
+import Phaser from "phaser";
+import LabScene from "./labScene";
+import { Battery } from "../components/battery";
+import { Bulb } from "../components/bulb";
+import { Wire } from "../components/wire";
+import { CircuitGraph } from "../logic/circuit_graph";
+import { Node } from "../logic/node";
+import { Switch } from "../components/switch";
+import { Resistor } from "../components/resistor";
+import UIButton from "../ui/UIButton";
+import Oscilloscope from "../ui/Oscilloscope";
+import {
+    createComponent,
+    openComponentContextMenu,
+} from "../components/ComponentHelper";
 import { CircuitSim } from "../logic/circuit_sim.js";
 
 export default class WorkspaceScene extends Phaser.Scene {
@@ -40,7 +43,7 @@ export default class WorkspaceScene extends Phaser.Scene {
         const { width, height } = this.cameras.main;
         this.sim = new CircuitSim();
         this.clearAllComponents();
-        
+
         // površje mize
         const desk = this.add
             .rectangle(0, 0, width, height, 0xe0c9a6)
@@ -206,64 +209,65 @@ export default class WorkspaceScene extends Phaser.Scene {
             })
             .setOrigin(0.5);
 
-    // Action buttons
-    new UIButton(this, {
-      x: width - 140,
-      y: 75,
-      text: 'Lestvica',
-      onClick: () => this.scene.start('ScoreboardScene', { cameFromScene: 'WorkspaceScene' }),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        // Action buttons
+        new UIButton(this, {
+            x: width - 140,
+            y: 75,
+            text: "Lestvica",
+            onClick: () =>
+                this.scene.start("ScoreboardScene", {
+                    cameFromScene: "WorkspaceScene",
+                }),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 125,
-      text: 'Preveri krog',
-      onClick: () => this.checkCircuit(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 125,
+            text: "Preveri krog",
+            onClick: () => this.checkCircuit(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 175,
-      text: 'Simulacija',
-      onClick: () => {
-        this.connected = this.graph.simulate()
-        if (this.connected == 1) {
-          this.checkText.setStyle({ color: '#00aa00' });
-          this.checkText.setText('Električni tok je sklenjen');
-          this.sim = true;
-          return;
-        }
-        this.checkText.setStyle({ color: '#cc0000' });
-        if (this.connected == -1) {
-          this.checkText.setText('Manjka ti baterija');
-        }
-        else if (this.connected == -2) {
-          this.checkText.setText('Stikalo je izklopljeno');
-        }
-        else if (this.connected == 0) {
-          this.checkText.setText('Električni tok ni sklenjen');
-        }
-        this.sim = false;
-      },
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 175,
+            text: "Simulacija",
+            onClick: () => {
+                this.connected = this.graph.simulate();
+                if (this.connected == 1) {
+                    this.checkText.setStyle({ color: "#00aa00" });
+                    this.checkText.setText("Električni tok je sklenjen");
+                    this.sim = true;
+                    return;
+                }
+                this.checkText.setStyle({ color: "#cc0000" });
+                if (this.connected == -1) {
+                    this.checkText.setText("Manjka ti baterija");
+                } else if (this.connected == -2) {
+                    this.checkText.setText("Stikalo je izklopljeno");
+                } else if (this.connected == 0) {
+                    this.checkText.setText("Električni tok ni sklenjen");
+                }
+                this.sim = false;
+            },
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
     new UIButton(this, {
       x: width - 140,
       y: 225,
       text: 'new_sim',
-      onClick: () => this.sim.generate_tree(),
+      onClick: () => this.sim.init(),
       background: {
         width: 180,
         height: 45
@@ -271,72 +275,72 @@ export default class WorkspaceScene extends Phaser.Scene {
     });
     window.sim = this.sim; // DEBUGGING PURPOSES
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 275,
-      text: 'new_sim',
-      onClick: () => this.sim.generate_tree(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
-    window.sim = this.sim; // DEBUGGING PURPOSES
+        new UIButton(this, {
+            x: width - 140,
+            y: 275,
+            text: "new_sim",
+            onClick: () => this.sim.generate_tree(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
+        window.sim = this.sim; // DEBUGGING PURPOSES
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 275,
-      text: 'Formule',
-      onClick: () => this.showCalculationFormulas(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 275,
+            text: "Formule",
+            onClick: () => this.showCalculationFormulas(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 325,
-      text: 'Export',
-      onClick: () => this.exportComponents(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 325,
+            text: "Export",
+            onClick: () => this.exportComponents(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 375,
-      text: 'Import',
-      onClick: () => this.importComponents(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 375,
+            text: "Import",
+            onClick: () => this.importComponents(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 325,
-      text: 'Export',
-      onClick: () => this.exportComponents(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 325,
+            text: "Export",
+            onClick: () => this.exportComponents(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
-    new UIButton(this, {
-      x: width - 140,
-      y: 375,
-      text: 'Import',
-      onClick: () => this.importComponents(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
+        new UIButton(this, {
+            x: width - 140,
+            y: 375,
+            text: "Import",
+            onClick: () => this.importComponents(),
+            background: {
+                width: 180,
+                height: 45,
+            },
+        });
 
         // stranska vrstica na levi
         const panelWidth = 150;
@@ -363,37 +367,36 @@ export default class WorkspaceScene extends Phaser.Scene {
         this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
         this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
 
-    new UIButton(this, {
-      x: 12,
-      y: 10,
-      text: '↩ Nazaj',
-      onClick: () => {
-        this.cameras.main.fade(300, 0, 0, 0);
-        this.time.delayedCall(300, () => {
-          this.scene.start('LabScene');
+        new UIButton(this, {
+            x: 12,
+            y: 10,
+            text: "↩ Nazaj",
+            onClick: () => {
+                this.cameras.main.fade(300, 0, 0, 0);
+                this.time.delayedCall(300, () => {
+                    this.scene.start("LabScene");
+                });
+            },
+            origin: [0, 0],
+            style: {
+                fontSize: "20px",
+                color: "#387affff",
+                padding: { x: 20, y: 10 },
+            },
+            hover: {
+                color: "#0054fdff",
+            },
         });
-      },
-      origin: [0, 0],
-      style: {
-        fontSize: '20px',
-        color: '#387affff',
-        padding: { x: 20, y: 10 }
-      },
-      hover: {
-        color: '#0054fdff'
-      }
-    });
 
-
-    this.oscilloscope = new Oscilloscope(this, {
-      x: 400,
-      y: 300,
-      width: 300,
-      height: 200,
-      maxMeasurements: 10,
-      minVoltage: -5,
-      maxVoltage: 5
-    });
+        // this.oscilloscope = new Oscilloscope(this, {
+        //     x: 400,
+        //     y: 300,
+        //     width: 300,
+        //     height: 200,
+        //     maxMeasurements: 10,
+        //     minVoltage: -5,
+        //     maxVoltage: 5,
+        // });
 
         this.add
             .text(
@@ -477,24 +480,24 @@ export default class WorkspaceScene extends Phaser.Scene {
         //     this.graph.simulate();
         //   });
 
-    console.log(JSON.parse(localStorage.getItem('users')));
+        console.log(JSON.parse(localStorage.getItem("users")));
 
-    this.testOscilloscopeSineWave();
-  }
+        this.testOscilloscopeSineWave();
+    }
 
-  getComponentDetails(type) {
-    const details = {
-      'baterija': 'Napetost: 3.3 V\nVir električne energije',
-      'upor': 'Uporabnost: omejuje tok\nMeri se v ohmih (Ω)',
-      'svetilka': 'Pretvarja električno energijo v svetlobo',
-      'stikalo-on': 'Dovoljuje pretok toka',
-      'stikalo-off': 'Prepreči pretok toka',
-      'žica': 'Povezuje komponente\nKlikni za obračanje',
-      'ampermeter': 'Meri električni tok\nEnota: amperi (A)',
-      'voltmeter': 'Meri električno napetost\nEnota: volti (V)'
-    };
-    return details[type] || 'Komponenta';
-  }
+    getComponentDetails(type) {
+        const details = {
+            baterija: "Napetost: 3.3 V\nVir električne energije",
+            upor: "Uporabnost: omejuje tok\nMeri se v ohmih (Ω)",
+            svetilka: "Pretvarja električno energijo v svetlobo",
+            "stikalo-on": "Dovoljuje pretok toka",
+            "stikalo-off": "Prepreči pretok toka",
+            žica: "Povezuje komponente\nKlikni za obračanje",
+            ampermeter: "Meri električni tok\nEnota: amperi (A)",
+            voltmeter: "Meri električno napetost\nEnota: volti (V)",
+        };
+        return details[type] || "Komponenta";
+    }
 
     createGrid() {
         const { width, height } = this.cameras.main;
@@ -687,9 +690,16 @@ export default class WorkspaceScene extends Phaser.Scene {
         this.calculationModal = this.add.container(0, 0);
 
         // Semi-transparent background
-        const bg = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7);
+        const bg = this.add.rectangle(
+            width / 2,
+            height / 2,
+            width,
+            height,
+            0x000000,
+            0.7
+        );
         bg.setInteractive();
-        bg.on('pointerdown', () => {
+        bg.on("pointerdown", () => {
             this.calculationModal.destroy();
             this.calculationModal = null;
         });
@@ -697,15 +707,26 @@ export default class WorkspaceScene extends Phaser.Scene {
         // Modal panel
         const panelWidth = 700;
         const panelHeight = 550;
-        const panel = this.add.rectangle(width / 2, height / 2, panelWidth, panelHeight, 0xffffff);
+        const panel = this.add.rectangle(
+            width / 2,
+            height / 2,
+            panelWidth,
+            panelHeight,
+            0xffffff
+        );
         panel.setStrokeStyle(3, 0x333333);
 
         // Title
-        const title = this.add.text(width / 2, height / 2 - panelHeight / 2 + 30, 'Formule za Izračune', {
-            fontSize: '28px',
-            fontStyle: 'bold',
-            color: '#333333'
-        });
+        const title = this.add.text(
+            width / 2,
+            height / 2 - panelHeight / 2 + 30,
+            "Formule za Izračune",
+            {
+                fontSize: "28px",
+                fontStyle: "bold",
+                color: "#333333",
+            }
+        );
         title.setOrigin(0.5);
 
         // Create scrollable content area
@@ -719,39 +740,113 @@ export default class WorkspaceScene extends Phaser.Scene {
         let currentY = 0;
 
         const formulas = [
-            { section: 'Ohmov zakon:', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
-            { text: 'U = I × R    (Napetost = Tok × Upor)', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'I = U / R     (Tok = Napetost / Upor)', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'R = U / I     (Upor = Napetost / Tok)', style: { fontSize: '16px', color: '#333333' } },
-            { text: '', style: {} },
-            
-            { section: 'Zaporedna vezava (serijska):', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
-            { text: 'R_skupni = R₁ + R₂ + R₃ + ...', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'I_skupni = I₁ = I₂ = I₃ = ... (enak tok)', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'U_skupni = U₁ + U₂ + U₃ + ...', style: { fontSize: '16px', color: '#333333' } },
-            { text: '', style: {} },
-            
-            { section: 'Vzporedna vezava (paralelna):', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
-            { text: '1/R_skupni = 1/R₁ + 1/R₂ + 1/R₃ + ...', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'U_skupni = U₁ = U₂ = U₃ = ...(enaka napetost)', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'I_skupni = I₁ + I₂ + I₃ + ...', style: { fontSize: '16px', color: '#333333' } },
-            { text: '', style: {} },
-            
-            { section: 'Moč:', style: { fontSize: '20px', fontStyle: 'bold', color: '#0066cc' } },
-            { text: 'P = U × I    (Moč = Napetost × Tok)', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'P = I² × R   (Moč = Tok² × Upor)', style: { fontSize: '16px', color: '#333333' } },
-            { text: 'P = U² / R   (Moč = Napetost² / Upor)', style: { fontSize: '16px', color: '#333333' } }
+            {
+                section: "Ohmov zakon:",
+                style: {
+                    fontSize: "20px",
+                    fontStyle: "bold",
+                    color: "#0066cc",
+                },
+            },
+            {
+                text: "U = I × R    (Napetost = Tok × Upor)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "I = U / R     (Tok = Napetost / Upor)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "R = U / I     (Upor = Napetost / Tok)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            { text: "", style: {} },
+
+            {
+                section: "Zaporedna vezava (serijska):",
+                style: {
+                    fontSize: "20px",
+                    fontStyle: "bold",
+                    color: "#0066cc",
+                },
+            },
+            {
+                text: "R_skupni = R₁ + R₂ + R₃ + ...",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "I_skupni = I₁ = I₂ = I₃ = ... (enak tok)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "U_skupni = U₁ + U₂ + U₃ + ...",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            { text: "", style: {} },
+
+            {
+                section: "Vzporedna vezava (paralelna):",
+                style: {
+                    fontSize: "20px",
+                    fontStyle: "bold",
+                    color: "#0066cc",
+                },
+            },
+            {
+                text: "1/R_skupni = 1/R₁ + 1/R₂ + 1/R₃ + ...",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "U_skupni = U₁ = U₂ = U₃ = ...(enaka napetost)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "I_skupni = I₁ + I₂ + I₃ + ...",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            { text: "", style: {} },
+
+            {
+                section: "Moč:",
+                style: {
+                    fontSize: "20px",
+                    fontStyle: "bold",
+                    color: "#0066cc",
+                },
+            },
+            {
+                text: "P = U × I    (Moč = Napetost × Tok)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "P = I² × R   (Moč = Tok² × Upor)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
+            {
+                text: "P = U² / R   (Moč = Napetost² / Upor)",
+                style: { fontSize: "16px", color: "#333333" },
+            },
         ];
 
         formulas.forEach((formula) => {
             if (formula.section) {
-                const sectionText = this.add.text(0, currentY, formula.section, formula.style);
+                const sectionText = this.add.text(
+                    0,
+                    currentY,
+                    formula.section,
+                    formula.style
+                );
                 scrollContainer.add(sectionText);
                 currentY += lineHeight;
-            } else if (formula.text === '') {
+            } else if (formula.text === "") {
                 currentY += 15;
             } else {
-                const formulaText = this.add.text(20, currentY, formula.text, formula.style);
+                const formulaText = this.add.text(
+                    20,
+                    currentY,
+                    formula.text,
+                    formula.style
+                );
                 scrollContainer.add(formulaText);
                 currentY += lineHeight - 5;
             }
@@ -762,7 +857,7 @@ export default class WorkspaceScene extends Phaser.Scene {
         // Set initial position of scroll container
         scrollContainer.x = contentX;
         scrollContainer.y = contentStartY;
-        
+
         // Create mask for scrollable area
         const maskShape = this.make.graphics();
         maskShape.fillStyle(0xffffff);
@@ -774,7 +869,7 @@ export default class WorkspaceScene extends Phaser.Scene {
         );
         const mask = maskShape.createGeometryMask();
         scrollContainer.setMask(mask);
-        
+
         let scrollOffset = 0;
 
         // Scroll zone (invisible interactive area)
@@ -789,9 +884,12 @@ export default class WorkspaceScene extends Phaser.Scene {
         scrollZone.setInteractive();
 
         // Mouse wheel scrolling
-        scrollZone.on('wheel', (pointer, deltaX, deltaY) => {
+        scrollZone.on("wheel", (pointer, deltaX, deltaY) => {
             scrollOffset += deltaY * 0.5;
-            const maxScroll = Math.max(0, totalContentHeight - contentAreaHeight);
+            const maxScroll = Math.max(
+                0,
+                totalContentHeight - contentAreaHeight
+            );
             scrollOffset = Phaser.Math.Clamp(scrollOffset, 0, maxScroll);
             scrollContainer.y = contentStartY - scrollOffset;
         });
@@ -801,45 +899,67 @@ export default class WorkspaceScene extends Phaser.Scene {
         let dragStartY = 0;
         let dragStartScroll = 0;
 
-        scrollZone.on('pointerdown', (pointer) => {
+        scrollZone.on("pointerdown", (pointer) => {
             isDragging = true;
             dragStartY = pointer.y;
             dragStartScroll = scrollOffset;
         });
 
-        this.input.on('pointermove', (pointer) => {
+        this.input.on("pointermove", (pointer) => {
             if (isDragging) {
                 const deltaY = dragStartY - pointer.y;
                 scrollOffset = dragStartScroll + deltaY;
-                const maxScroll = Math.max(0, totalContentHeight - contentAreaHeight);
+                const maxScroll = Math.max(
+                    0,
+                    totalContentHeight - contentAreaHeight
+                );
                 scrollOffset = Phaser.Math.Clamp(scrollOffset, 0, maxScroll);
                 scrollContainer.y = contentStartY - scrollOffset;
             }
         });
 
-        this.input.on('pointerup', () => {
+        this.input.on("pointerup", () => {
             isDragging = false;
         });
 
         // Close button
-        const closeButton = this.add.rectangle(width / 2, height / 2 + panelHeight / 2 - 30, 120, 40, 0x0066cc);
+        const closeButton = this.add.rectangle(
+            width / 2,
+            height / 2 + panelHeight / 2 - 30,
+            120,
+            40,
+            0x0066cc
+        );
         closeButton.setInteractive({ useHandCursor: true });
-        closeButton.on('pointerdown', () => {
+        closeButton.on("pointerdown", () => {
             this.calculationModal.destroy();
             this.calculationModal = null;
         });
-        closeButton.on('pointerover', () => closeButton.setFillStyle(0x0088ee));
-        closeButton.on('pointerout', () => closeButton.setFillStyle(0x0066cc));
+        closeButton.on("pointerover", () => closeButton.setFillStyle(0x0088ee));
+        closeButton.on("pointerout", () => closeButton.setFillStyle(0x0066cc));
 
-        const closeText = this.add.text(width / 2, height / 2 + panelHeight / 2 - 30, 'Zapri', {
-            fontSize: '18px',
-            fontStyle: 'bold',
-            color: '#ffffff'
-        });
+        const closeText = this.add.text(
+            width / 2,
+            height / 2 + panelHeight / 2 - 30,
+            "Zapri",
+            {
+                fontSize: "18px",
+                fontStyle: "bold",
+                color: "#ffffff",
+            }
+        );
         closeText.setOrigin(0.5);
 
         // Add all elements to container (note: maskShape should NOT be added to avoid covering text)
-        this.calculationModal.add([bg, panel, title, scrollContainer, scrollZone, closeButton, closeText]);
+        this.calculationModal.add([
+            bg,
+            panel,
+            title,
+            scrollContainer,
+            scrollZone,
+            closeButton,
+            closeText,
+        ]);
     }
 
     nextChallenge() {
@@ -891,328 +1011,514 @@ export default class WorkspaceScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(11);
 
-    this.continueButton = new UIButton(this, {
-      x: width / 2,
-      y: height / 2 + 70,
-      text: 'Nadaljuj',
-      onClick: () => {
-        this.hideTheory();
-        this.placedComponents.forEach(comp => comp.destroy());
-        this.placedComponents = [];
-        this.nextChallenge();
-      },
-      style: {
-        fontSize: '18px',
-        color: '#0066ff',
-        backgroundColor: '#ffffff',
-        padding: { x: 20, y: 10 }
-      },
-      hover: {
-        color: '#0044cc'
-      },
-      depth: 11
-    });
-
-
-  }
-
-  hideTheory() {
-    if (this.theoryBack) {
-      this.theoryBack.destroy();
-      this.theoryBack = null;
+        this.continueButton = new UIButton(this, {
+            x: width / 2,
+            y: height / 2 + 70,
+            text: "Nadaljuj",
+            onClick: () => {
+                this.hideTheory();
+                this.placedComponents.forEach((comp) => comp.destroy());
+                this.placedComponents = [];
+                this.nextChallenge();
+            },
+            style: {
+                fontSize: "18px",
+                color: "#0066ff",
+                backgroundColor: "#ffffff",
+                padding: { x: 20, y: 10 },
+            },
+            hover: {
+                color: "#0044cc",
+            },
+            depth: 11,
+        });
     }
-    if (this.theoryText) {
-      this.theoryText.destroy();
-      this.theoryText = null;
-    }
-    if (this.continueButton) {
-      this.continueButton.destroy();
-      this.continueButton = null;
-    }
-  }
 
-  /**
-   * Test function to demonstrate oscilloscope with a sine wave
-   */
-  testOscilloscopeSineWave() {
-    // Initialize test parameters
-    let time = 0;
-    const frequency = 0.1; // Hz (10 second period, so we see variation across 10 measurements)
-    const amplitude = 4; // Volts (range -4 to +4, fits within -5 to +5)
-    
-    // Create a timer that measures voltage once per second
-    this.oscilloscopeTimer = this.time.addEvent({
-      delay: 1000, // 1 second
-      callback: () => {
-        // Calculate sine wave voltage: V = amplitude * sin(2π * frequency * time)
-        const voltage = amplitude * Math.sin(2 * Math.PI * frequency * time);
-        // console.logtime:", time, "voltage:", voltage.toFixed(3));
-        
-        // Measure the voltage with the oscilloscope
-        if (this.oscilloscope) {
-          this.oscilloscope.measure(voltage);
-        }else{
-          console.log("no osciloscope found")
+    hideTheory() {
+        if (this.theoryBack) {
+            this.theoryBack.destroy();
+            this.theoryBack = null;
         }
-        
-        time += 1; // Increment time by 1 second
-      },
-      loop: true
-    });
-  }
-
-  /**
-   * Stop the oscilloscope test
-   */
-  stopOscilloscopeTest() {
-    if (this.oscilloscopeTimer) {
-      this.oscilloscopeTimer.remove();
-      this.oscilloscopeTimer = null;
-    }
-    if (this.oscilloscope) {
-      this.oscilloscope.clear();
-    }
-  }
-
-  exportComponents() {
-    if (!this.placedComponents || this.placedComponents.length === 0) {
-      alert('Ni komponent za izvoz!');
-      return;
-    }
-
-    const exportData = {
-      version: '1.0',
-      timestamp: new Date().toISOString(),
-      components: []
-    };
-
-    this.placedComponents.forEach(visualContainer => {
-      const comp = visualContainer.getData('logicComponent');
-      if (!comp || visualContainer.getData('isInPanel')) return;
-      
-      const componentData = {
-        id: comp.id,
-        type: comp.type,
-        name: comp.name,
-        x: visualContainer.x,
-        y: visualContainer.y,
-        rotation: visualContainer.rotation || 0,
-        start: {
-          id: comp.start.id,
-          x: comp.start.x,
-          y: comp.start.y,
-          wireId: comp.start.wire ? comp.start.wire.id : null
-        },
-        end: {
-          id: comp.end.id,
-          x: comp.end.x,
-          y: comp.end.y,
-          wireId: comp.end.wire ? comp.end.wire.id : null
+        if (this.theoryText) {
+            this.theoryText.destroy();
+            this.theoryText = null;
         }
-      };
+        if (this.continueButton) {
+            this.continueButton.destroy();
+            this.continueButton = null;
+        }
+    }
 
-      if (comp.type === 'battery') {
-        componentData.voltage = comp.voltage || 9;
-      } else if (comp.type === 'resistor') {
-        componentData.resistance = comp.resistance || 100;
-      }
+    /**
+     * Test function to demonstrate oscilloscope with a sine wave
+     */
+    testOscilloscopeSineWave() {
+        // Initialize test parameters
+        let time = 0;
+        const frequency = 0.1; // Hz (10 second period, so we see variation across 10 measurements)
+        const amplitude = 4; // Volts (range -4 to +4, fits within -5 to +5)
 
-      exportData.components.push(componentData);
-    });
+        // Create a timer that measures voltage once per second
+        this.oscilloscopeTimer = this.time.addEvent({
+            delay: 1000, // 1 second
+            callback: () => {
+                // Calculate sine wave voltage: V = amplitude * sin(2π * frequency * time)
+                const voltage =
+                    amplitude * Math.sin(2 * Math.PI * frequency * time);
+                // console.logtime:", time, "voltage:", voltage.toFixed(3));
 
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `circuit_${Date.now()}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    alert(`Izvoženo ${exportData.components.length} komponent!`);
-  }
-
-  importComponents() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const importData = JSON.parse(event.target.result);
-          
-          if (!importData.components || !Array.isArray(importData.components)) {
-            throw new Error('Invalid file format');
-          }
-
-          this.clearAllComponents();
-          
-          const nodeMap = new Map();
-          const wireMap = new Map();
-          
-          importData.components.forEach(compData => {
-            let visualType;
-            if (compData.type === 'battery') visualType = 'baterija';
-            else if (compData.type === 'resistor') visualType = 'upor';
-            else if (compData.type === 'bulb') visualType = 'svetilka';
-            else if (compData.type === 'switch') visualType = 'stikalo-on';
-            else if (compData.type === 'ammeter' || compData.type === 'ampermeter') visualType = 'ampermeter';
-            else if (compData.type === 'voltmeter') visualType = 'voltmeter';
-            else return;
-            
-            const visualComponent = createComponent(this, compData.x, compData.y, visualType, 0xffffff);
-            const logicComponent = visualComponent.getData('logicComponent');
-            
-            visualComponent.setData('isInPanel', false);
-            
-            if (!window.components) window.components = [];
-            if (!window.components.includes(logicComponent)) {
-              window.components.push(logicComponent);
-            }
-            
-            this.placedComponents.push(visualComponent);
-            
-            this.graph.addComponent(logicComponent);
-            if (logicComponent.start) this.graph.addNode(logicComponent.start);
-            if (logicComponent.end) this.graph.addNode(logicComponent.end);
-            
-            if (compData.rotation) {
-              visualComponent.setRotation(compData.rotation);
-            }
-            
-            this.updateLogicNodePositions(visualComponent);
-            
-            if (compData.type === 'battery' && compData.voltage) {
-              logicComponent.voltage = compData.voltage;
-            } else if (compData.type === 'resistor' && compData.resistance) {
-              logicComponent.resistance = compData.resistance;
-            }
-            
-            const label = visualComponent.getData('displayLabel');
-            if (label && logicComponent.values && logicComponent.values.name) {
-              label.setText(logicComponent.values.name);
-            }
-            
-            nodeMap.set(compData.start.id, logicComponent.start);
-            nodeMap.set(compData.end.id, logicComponent.end);
-          });
-          
-          const wireGroups = new Map();
-          
-          importData.components.forEach(compData => {
-            const startNode = nodeMap.get(compData.start.id);
-            const endNode = nodeMap.get(compData.end.id);
-            
-            if (compData.start.wireId && startNode) {
-              if (!wireGroups.has(compData.start.wireId)) {
-                wireGroups.set(compData.start.wireId, []);
-              }
-              wireGroups.get(compData.start.wireId).push(startNode);
-            }
-            
-            if (compData.end.wireId && endNode) {
-              if (!wireGroups.has(compData.end.wireId)) {
-                wireGroups.set(compData.end.wireId, []);
-              }
-              wireGroups.get(compData.end.wireId).push(endNode);
-            }
-          });
-          
-          wireGroups.forEach((nodes, wireId) => {
-            if (nodes.length < 2) return;
-            
-            const wire = new Wire(nodes[0], nodes[1], this);
-            
-            if (nodes.length > 2) {
-              for (let i = 2; i < nodes.length; i++) {
-                if (!nodes[i].wire) {
-                  wire.addNode(nodes[i]);
+                // Measure the voltage with the oscilloscope
+                if (this.oscilloscope) {
+                    this.oscilloscope.measure(voltage);
+                } else {
+                    console.log("no osciloscope found");
                 }
-              }
+
+                time += 1; // Increment time by 1 second
+            },
+            loop: true,
+        });
+    }
+
+    stopOscilloscopeTest() {
+        if (this.oscilloscopeTimer) {
+            this.oscilloscopeTimer.remove();
+            this.oscilloscopeTimer = null;
+        }
+        if (this.oscilloscope) {
+            this.oscilloscope.clear();
+        }
+    }
+
+    exportComponents() {
+        if (!this.placedComponents || this.placedComponents.length === 0) {
+            alert("Ni komponent za izvoz!");
+            return;
+        }
+
+        const exportData = {
+            version: "2.0",
+            timestamp: new Date().toISOString(),
+            components: [],
+        };
+
+        // Helper function to export a component
+        const exportComponent = (visualContainer) => {
+            const comp = visualContainer.getData("logicComponent");
+            if (!comp || visualContainer.getData("isInPanel")) return null;
+
+            const componentData = {
+                id: comp.id,
+                type: comp.type,
+                name: comp.name,
+                x: visualContainer.x,
+                y: visualContainer.y,
+                rotation: visualContainer.rotation || 0,
+                start: {
+                    id: comp.start.id,
+                    x: comp.start.x,
+                    y: comp.start.y,
+                    wireId: comp.start.wire ? comp.start.wire.id : null,
+                },
+                end: {
+                    id: comp.end.id,
+                    x: comp.end.x,
+                    y: comp.end.y,
+                    wireId: comp.end.wire ? comp.end.wire.id : null,
+                },
+                // Export all component values
+                values: {}
+            };
+
+            // Export component values (resistance, voltage, current, power, etc.)
+            if (comp.values) {
+                Object.keys(comp.values).forEach(key => {
+                    const value = comp.values[key];
+                    // Handle both direct values and value objects {value, automatic}
+                    if (typeof value === 'object' && value !== null && 'value' in value) {
+                        componentData.values[key] = {
+                            value: value.value,
+                            automatic: value.automatic !== undefined ? value.automatic : false
+                        };
+                    } else {
+                        componentData.values[key] = value;
+                    }
+                });
             }
+
+            // Backwards compatibility - keep old format for battery and resistor
+            if (comp.type === "battery") {
+                componentData.voltage = comp.voltage || comp.values?.voltage?.value || comp.values?.maxVoltage?.value || comp.values?.maxVoltage || 9;
+            } else if (comp.type === "resistor") {
+                componentData.resistance = comp.resistance || comp.values?.resistance?.value || 100;
+            }
+
+            return componentData;
+        };
+
+        // First pass: Export battery first
+        this.placedComponents.forEach((visualContainer) => {
+            const comp = visualContainer.getData("logicComponent");
+            const isInPanel = visualContainer.getData("isInPanel");
             
-            wireMap.set(wireId, wire);
-          });
-          
-          //alert(`Uvoženo ${importData.components.length} komponent!`);
-          
-        } catch (error) {
-          console.error('Import failed:', error);
-          //alert('Napaka pri uvozu datoteke!');
-        }
-      };
-      
-      reader.readAsText(file);
-    };
-    
-    input.click();
-  }
+            if (comp && comp.type === "battery" && !isInPanel) {
+                const componentData = exportComponent(visualContainer);
+                if (componentData) {
+                    exportData.components.push(componentData);
+                }
+            }
+        });
 
-  clearAllComponents() {
-    const wiresToDestroy = new Set();
-    
-    if (this.placedComponents && this.placedComponents.length > 0) {
-      const componentsToDestroy = [...this.placedComponents];
-      
-      componentsToDestroy.forEach(visualContainer => {
-        const comp = visualContainer.getData('logicComponent');
-        if (!comp || visualContainer.getData('isInPanel')) return;
-        
-        if (comp.start && comp.start.wire) {
-          wiresToDestroy.add(comp.start.wire);
-        }
-        if (comp.end && comp.end.wire) {
-          wiresToDestroy.add(comp.end.wire);
-        }
-        
-        if (comp.start && comp.start.graphics) {
-          comp.start.graphics.destroy();
-        }
-        
-        if (comp.end && comp.end.graphics) {
-          comp.end.graphics.destroy();
-        }
-        
-        if (this.graph) {
-          if (comp.start) this.graph.nodes.delete(comp.start);
-          if (comp.end) this.graph.nodes.delete(comp.end);
-          if (this.graph.components) {
-            const compIndex = this.graph.components.indexOf(comp);
-            if (compIndex > -1) this.graph.components.splice(compIndex, 1);
-          }
-        }
-        
-        visualContainer.destroy();
-        
-        if (comp.destroy) {
-          comp.destroy();
-        }
-      });
-    }
-    
-    wiresToDestroy.forEach(wire => {
-      if (wire && wire.deleteWire) {
-        wire.deleteWire();
-      }
-    });
-    
-    this.placedComponents = [];
-    
-    if (window.components) {
-      window.components = window.components.filter(comp => {
-        const visualContainer = comp.componentObject;
-        return visualContainer && visualContainer.getData('isInPanel');
-      });
-    }
-  }
+        // Second pass: Export all other components
+        this.placedComponents.forEach((visualContainer) => {
+            const comp = visualContainer.getData("logicComponent");
+            if (comp && comp.type !== "battery" && !visualContainer.getData("isInPanel")) {
+                const componentData = exportComponent(visualContainer);
+                if (componentData) {
+                    exportData.components.push(componentData);
+                }
+            }
+        });
 
+        const jsonString = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `circuit_${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        alert(`Izvoženo ${exportData.components.length} komponent!`);
+    }
+
+    importComponents() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importData = JSON.parse(event.target.result);
+
+                    if (
+                        !importData.components ||
+                        !Array.isArray(importData.components)
+                    ) {
+                        throw new Error("Invalid file format");
+                    }
+
+                    this.clearAllComponents();
+
+                    const nodeMap = new Map();
+                    const wireMap = new Map();
+
+                    // First pass: Find and load the battery first
+                    const batteryData = importData.components.find(compData => compData.type === "battery");
+                    let batteryLogicComponent = null;
+
+                    if (batteryData) {
+                        const visualComponent = createComponent(
+                            this,
+                            batteryData.x,
+                            batteryData.y,
+                            "baterija",
+                            0xffffff
+                        );
+                        batteryLogicComponent = visualComponent.getData("logicComponent");
+
+                        visualComponent.setData("isInPanel", false);
+
+                        if (!window.components) window.components = [];
+                        if (!window.components.includes(batteryLogicComponent)) {
+                            window.components.push(batteryLogicComponent);
+                        }
+
+                        this.placedComponents.push(visualComponent);
+
+                        this.graph.addComponent(batteryLogicComponent);
+                        if (batteryLogicComponent.start)
+                            this.graph.addNode(batteryLogicComponent.start);
+                        if (batteryLogicComponent.end)
+                            this.graph.addNode(batteryLogicComponent.end);
+
+                        if (batteryData.rotation) {
+                            visualComponent.setRotation(batteryData.rotation);
+                        }
+
+                        this.updateLogicNodePositions(visualComponent);
+
+                        // Import battery values BEFORE loading other components
+                        if (batteryData.voltage) {
+                            batteryLogicComponent.voltage = batteryData.voltage;
+                            if (batteryLogicComponent.values && batteryLogicComponent.values.voltage) {
+                                if (typeof batteryLogicComponent.values.voltage === 'object') {
+                                    batteryLogicComponent.values.voltage.value = batteryData.voltage;
+                                } else {
+                                    batteryLogicComponent.values.voltage = batteryData.voltage;
+                                }
+                            }
+                        }
+
+                        // Import all battery component values (new format)
+                        if (batteryData.values && batteryLogicComponent.values) {
+                            Object.keys(batteryData.values).forEach(key => {
+                                const importedValue = batteryData.values[key];
+                                
+                                // Handle value objects {value, automatic}
+                                if (typeof importedValue === 'object' && importedValue !== null && 'value' in importedValue) {
+                                    if (typeof batteryLogicComponent.values[key] === 'object' && batteryLogicComponent.values[key] !== null) {
+                                        batteryLogicComponent.values[key].value = importedValue.value;
+                                        if (importedValue.automatic !== undefined) {
+                                            batteryLogicComponent.values[key].automatic = importedValue.automatic;
+                                        }
+                                    } else {
+                                        batteryLogicComponent.values[key] = importedValue.value;
+                                    }
+                                } else {
+                                    // Direct value
+                                    if (typeof batteryLogicComponent.values[key] === 'object' && batteryLogicComponent.values[key] !== null && 'value' in batteryLogicComponent.values[key]) {
+                                        batteryLogicComponent.values[key].value = importedValue;
+                                    } else {
+                                        batteryLogicComponent.values[key] = importedValue;
+                                    }
+                                }
+                            });
+                        }
+
+                        const label = visualComponent.getData("displayLabel");
+                        if (
+                            label &&
+                            batteryLogicComponent.values &&
+                            batteryLogicComponent.values.name
+                        ) {
+                            label.setText(batteryLogicComponent.values.name);
+                        }
+
+                        nodeMap.set(batteryData.start.id, batteryLogicComponent.start);
+                        nodeMap.set(batteryData.end.id, batteryLogicComponent.end);
+                    }
+
+                    // Second pass: Load all other components
+                    importData.components.forEach((compData) => {
+                        // Skip battery since we already loaded it
+                        if (compData.type === "battery") return;
+
+                        let visualType;
+                        if (compData.type === "resistor")
+                            visualType = "upor";
+                        else if (compData.type === "bulb")
+                            visualType = "svetilka";
+                        else if (compData.type === "switch")
+                            visualType = "stikalo-on";
+                        else if (
+                            compData.type === "ammeter" ||
+                            compData.type === "ampermeter"
+                        )
+                            visualType = "ampermeter";
+                        else if (compData.type === "voltmeter")
+                            visualType = "voltmeter";
+                        else return;
+
+                        const visualComponent = createComponent(
+                            this,
+                            compData.x,
+                            compData.y,
+                            visualType,
+                            0xffffff
+                        );
+                        const logicComponent =
+                            visualComponent.getData("logicComponent");
+
+                        visualComponent.setData("isInPanel", false);
+
+                        if (!window.components) window.components = [];
+                        if (!window.components.includes(logicComponent)) {
+                            window.components.push(logicComponent);
+                        }
+
+                        this.placedComponents.push(visualComponent);
+
+                        this.graph.addComponent(logicComponent);
+                        if (logicComponent.start)
+                            this.graph.addNode(logicComponent.start);
+                        if (logicComponent.end)
+                            this.graph.addNode(logicComponent.end);
+
+                        if (compData.rotation) {
+                            visualComponent.setRotation(compData.rotation);
+                        }
+
+                        this.updateLogicNodePositions(visualComponent);
+
+                        // Import component values - backwards compatibility for old format
+                        if (compData.type === "resistor" && compData.resistance) {
+                            logicComponent.resistance = compData.resistance;
+                            if (logicComponent.values && logicComponent.values.resistance) {
+                                if (typeof logicComponent.values.resistance === 'object') {
+                                    logicComponent.values.resistance.value = compData.resistance;
+                                } else {
+                                    logicComponent.values.resistance = compData.resistance;
+                                }
+                            }
+                        }
+
+                        // Import all component values (new format)
+                        if (compData.values && logicComponent.values) {
+                            Object.keys(compData.values).forEach(key => {
+                                const importedValue = compData.values[key];
+                                
+                                // Handle value objects {value, automatic}
+                                if (typeof importedValue === 'object' && importedValue !== null && 'value' in importedValue) {
+                                    if (typeof logicComponent.values[key] === 'object' && logicComponent.values[key] !== null) {
+                                        logicComponent.values[key].value = importedValue.value;
+                                        if (importedValue.automatic !== undefined) {
+                                            logicComponent.values[key].automatic = importedValue.automatic;
+                                        }
+                                    } else {
+                                        logicComponent.values[key] = importedValue.value;
+                                    }
+                                } else {
+                                    // Direct value
+                                    if (typeof logicComponent.values[key] === 'object' && logicComponent.values[key] !== null && 'value' in logicComponent.values[key]) {
+                                        logicComponent.values[key].value = importedValue;
+                                    } else {
+                                        logicComponent.values[key] = importedValue;
+                                    }
+                                }
+                            });
+                        }
+
+                        const label = visualComponent.getData("displayLabel");
+                        if (
+                            label &&
+                            logicComponent.values &&
+                            logicComponent.values.name
+                        ) {
+                            label.setText(logicComponent.values.name);
+                        }
+
+                        nodeMap.set(compData.start.id, logicComponent.start);
+                        nodeMap.set(compData.end.id, logicComponent.end);
+                    });
+
+                    const wireGroups = new Map();
+
+                    importData.components.forEach((compData) => {
+                        const startNode = nodeMap.get(compData.start.id);
+                        const endNode = nodeMap.get(compData.end.id);
+
+                        if (compData.start.wireId && startNode) {
+                            if (!wireGroups.has(compData.start.wireId)) {
+                                wireGroups.set(compData.start.wireId, []);
+                            }
+                            wireGroups
+                                .get(compData.start.wireId)
+                                .push(startNode);
+                        }
+
+                        if (compData.end.wireId && endNode) {
+                            if (!wireGroups.has(compData.end.wireId)) {
+                                wireGroups.set(compData.end.wireId, []);
+                            }
+                            wireGroups.get(compData.end.wireId).push(endNode);
+                        }
+                    });
+
+                    wireGroups.forEach((nodes, wireId) => {
+                        if (nodes.length < 2) return;
+
+                        const wire = new Wire(nodes[0], nodes[1], this);
+
+                        if (nodes.length > 2) {
+                            for (let i = 2; i < nodes.length; i++) {
+                                if (!nodes[i].wire) {
+                                    wire.addNode(nodes[i]);
+                                }
+                            }
+                        }
+
+                        wireMap.set(wireId, wire);
+                    });
+
+                    //alert(`Uvoženo ${importData.components.length} komponent!`);
+                } catch (error) {
+                    console.error("Import failed:", error);
+                    //alert('Napaka pri uvozu datoteke!');
+                }
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
+    }
+
+    clearAllComponents() {
+        const wiresToDestroy = new Set();
+
+        if (this.placedComponents && this.placedComponents.length > 0) {
+            const componentsToDestroy = [...this.placedComponents];
+
+            componentsToDestroy.forEach((visualContainer) => {
+                const comp = visualContainer.getData("logicComponent");
+                if (!comp || visualContainer.getData("isInPanel")) return;
+
+                if (comp.start && comp.start.wire) {
+                    wiresToDestroy.add(comp.start.wire);
+                }
+                if (comp.end && comp.end.wire) {
+                    wiresToDestroy.add(comp.end.wire);
+                }
+
+                if (comp.start && comp.start.graphics) {
+                    comp.start.graphics.destroy();
+                }
+
+                if (comp.end && comp.end.graphics) {
+                    comp.end.graphics.destroy();
+                }
+
+                if (this.graph) {
+                    if (comp.start) this.graph.nodes.delete(comp.start);
+                    if (comp.end) this.graph.nodes.delete(comp.end);
+                    if (this.graph.components) {
+                        const compIndex = this.graph.components.indexOf(comp);
+                        if (compIndex > -1)
+                            this.graph.components.splice(compIndex, 1);
+                    }
+                }
+
+                visualContainer.destroy();
+
+                if (comp.destroy) {
+                    comp.destroy();
+                }
+            });
+        }
+
+        wiresToDestroy.forEach((wire) => {
+            if (wire && wire.deleteWire) {
+                wire.deleteWire();
+            }
+        });
+
+        this.placedComponents = [];
+
+        if (window.components) {
+            window.components = window.components.filter((comp) => {
+                const visualContainer = comp.componentObject;
+                return visualContainer && visualContainer.getData("isInPanel");
+            });
+        }
+    }
 }
 
 const config = {

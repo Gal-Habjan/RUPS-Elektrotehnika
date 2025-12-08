@@ -26,7 +26,7 @@ class Component {
         this.debug_color = 0xff0000;
         this.direction = direction;
         this.componentObject = componentObject;
-
+        this.oscilloscope = null;
         //ui
         this.properties = {
             fields: [
@@ -40,7 +40,7 @@ class Component {
                 {
                     label: "Voltage Drop (V)",
                     type: "number",
-                    key: "voltageDrop",
+                    key: "voltage",
                     automatic: true,
                 },
                 {
@@ -55,17 +55,44 @@ class Component {
                     key: "power",
                     automatic: true,
                 },
+                {
+                    label: "Measuraments per second (Hz)",
+                    type: "number",
+                    key: "measuraments",
+                    automatic: false,
+                },
+                {
+                    label: "Seconds Shown (s)",
+                    type: "number",
+                    key: "shownTime",
+                    automatic: false,
+                },
             ],
         };
         this.values = {
             name: this.prefix,
-            voltageDrop: { value: 0, automatic: false },
-            current: { value: 0, automatic: false },
-            power: { value: 0, automatic: false },
+            voltage: { value: 0, automatic: true },
+            current: { value: 0, automatic: true },
+            power: { value: 0, automatic: true },
             resistance: { value: 0, automatic: false },
+            measuraments: 20,
+            shownTime: 5,
         };
     }
-
+    startInterval() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+        }
+        this.currentInterval = 0;
+        const measuraments = this.values.measuraments || 1;
+        this.intervalId = setInterval(() => {
+            this.getMeasurament();
+        }, 1000 / measuraments);
+    }
+    getMeasurament() {
+        if (this.oscilloscope)
+            this.oscilloscope.measure(this.values.voltage.value);
+    }
     updateMove(workspace, rotate = false) {
         console.log(`Component ${this.id} moved. Updating connected nodes.`);
         this.updateLogicNodePositions(workspace, rotate);
@@ -76,6 +103,8 @@ class Component {
         console.log(`Destroying component ${this.id}`);
         if (this.start) this.start.destroyNode();
         if (this.end) this.end.destroyNode();
+        this.oscilloscope.destroy();
+        this.oscilloscope = null;
     }
 
     updateLogicNodePositions(workspace, rotate) {
