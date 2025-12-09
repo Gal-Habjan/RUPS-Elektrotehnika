@@ -6,7 +6,7 @@ import { getClosestPointOnSegment } from "./wireHelper.js";
 class Wire {
     constructor(start, end, workspace) {
         this.id = `wire_${Math.floor(Math.random() * 10000)}`;
-        
+
         this.nodes = [];
 
         this.renderer = workspace.add.graphics();
@@ -53,14 +53,11 @@ class Wire {
         let closestPoint = null;
         let minDistance = Infinity;
 
-        // Check each path in the paths array
         for (const path of this.paths) {
-            // Check each line segment in the current path
             for (let i = 0; i < path.length - 1; i++) {
                 const segmentStart = path[i];
                 const segmentEnd = path[i + 1];
 
-                // Find the closest point on this line segment to (x, y)
                 const point = getClosestPointOnSegment(
                     segmentStart.x,
                     segmentStart.y,
@@ -70,12 +67,10 @@ class Wire {
                     y
                 );
 
-                // Calculate distance from (x, y) to this point
                 const distance = Math.sqrt(
                     Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2)
                 );
 
-                // Update if this is the closest point found so far
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestPoint = point;
@@ -94,9 +89,8 @@ class Wire {
         path.push(point);
 
         let previousPoint = startPoint;
-        // console.log(path);
+
         for (const point of path) {
-            // console.log(point);
             if (point == previousPoint) continue;
             let line = new Phaser.Geom.Line(
                 previousPoint.x,
@@ -112,7 +106,6 @@ class Wire {
     }
 
     draw() {
-        // console.log("startDraw");
         this.paths = [];
         this.renderer.clear();
         this.renderer.lineStyle(3, 0x000000, 1);
@@ -120,8 +113,6 @@ class Wire {
 
         this.paths.push(this.initialDraw(this.nodes[0], this.nodes[1]));
         for (let i = 2; i < this.nodes.length; i++) {
-            // console.log("additional node draw");
-            // console.log(this.paths);
             this.paths.push(this.addAdditionalPoint(this.nodes[i]));
         }
     }
@@ -135,12 +126,9 @@ class Wire {
         this.renderer.destroy();
     }
     initialDraw(start, end) {
-        // console.log("starting initial draw of wire", end.x, end.y);
-
         let directionsStart = this.getPosibleDirections(start, end);
         let directionsEnd = this.getPosibleDirections(end, start);
 
-        // Use globalX and globalY for start and end nodes
         const startPosition = {
             x: start.x,
             y: start.y,
@@ -159,9 +147,8 @@ class Wire {
         path.push(endPosition);
 
         let previousPoint = startPosition;
-        // console.log(path);
+
         for (const point of path) {
-            // console.log(point);
             if (point == previousPoint) continue;
             let line = new Phaser.Geom.Line(
                 previousPoint.x,
@@ -178,15 +165,7 @@ class Wire {
 
     getPath(start, end, directionsStart, directionsEnd, startDir, endDir) {
         let path = [];
-        // console.log("Calculating path from", start, "to", end);
-        // console.log(
-        //     start.x,
-        //     end.x,
-        //     start.y,
-        //     end.y,
-        //     directionsStart,
-        //     directionsEnd
-        // );
+
         if (start.x == end.x) {
             if (
                 (directionsStart.includes("UP") &&
@@ -196,7 +175,6 @@ class Wire {
                     directionsEnd.includes("UP") &&
                     start.y <= end.y)
             ) {
-                // console.log("same x axis looking towards each other");
                 return path;
             }
 
@@ -213,14 +191,13 @@ class Wire {
                     directionsEnd.includes("LEFT") &&
                     start.x < end.x)
             ) {
-                // console.log("same y axis looking towards each other");
                 return path;
             }
             path.push({ x: start.x, y: start.y + 40 });
             path.push({ x: end.x, y: end.y + 40 });
             return path;
         }
-        // helper: order directions based on component orientation
+
         const orderedDirections = (dirs, dirHint) => {
             if (!Array.isArray(dirs)) return [];
             if (dirHint === ComponentDirection.HORIZONTAL) {
@@ -240,7 +217,6 @@ class Wire {
             return dirs.slice();
         };
 
-        // helper: try to compute a two-step (two snaps) path
         const tryTwoStep = () => {
             const dirsToCheck = orderedDirections(directionsStart, startDir);
             for (const dir of dirsToCheck) {
@@ -277,7 +253,6 @@ class Wire {
             return null;
         };
 
-        // helper: try to compute a one-step (single snap) path
         const tryOneStep = () => {
             const dirsToCheck = orderedDirections(directionsStart, startDir);
             for (const dir of dirsToCheck) {
@@ -302,8 +277,6 @@ class Wire {
             return null;
         };
 
-        // Determine check order: if component directions are provided and differ,
-        // prefer one-step first, then two-step. Otherwise prefer two-step first.
         let result = null;
         if (typeof startDir !== "undefined" && typeof endDir !== "undefined") {
             if (startDir !== endDir) {
@@ -312,7 +285,6 @@ class Wire {
                 result = tryTwoStep() || tryOneStep();
             }
         } else {
-            // fallback: prefer two-step then one-step (legacy behavior)
             result = tryTwoStep() || tryOneStep();
         }
 
@@ -365,7 +337,6 @@ class Wire {
         };
 
         const tryTwoStep = () => {
-            // best-effort two-step for middle path when we don't have end directions
             for (const dir of directionsStart) {
                 if (dir == "LEFT" || dir == "RIGHT") {
                     let finalMidPoint = { x: (start.x + end.x) / 2, y: end.y };
@@ -385,11 +356,9 @@ class Wire {
             return null;
         };
 
-        // Try same-axis shortcuts first
         const same = sameAxisFallback();
         if (same) return same;
 
-        // If both component directions are known, prefer one-step when directions differ
         let result = null;
         if (
             typeof endDir !== "undefined" &&
@@ -402,7 +371,6 @@ class Wire {
                 result = tryTwoStep() || tryOneStep();
             }
         } else {
-            // fallback: try one-step then two-step
             result = tryOneStep() || tryTwoStep();
         }
 

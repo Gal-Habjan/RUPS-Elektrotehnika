@@ -451,7 +451,6 @@ export function createComponent(workspace, x, y, type, color, wireGraphics) {
     // });
 }
 
-// Top-level helper: keep action logic here, UI rendering delegated to ui/ContextMenu
 export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
     const logic = compObj.getData("logicComponent");
     const items = [
@@ -484,8 +483,7 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                         const maxMeasurements =
                             logic.type == "battery"
                                 ? logic.values.shownTime *
-                                  logic.values.clockSpeed *
-                                  logic.values.periodTime
+                                  logic.values.clockSpeed
                                 : logic.values.measuraments *
                                   logic.values.shownTime;
                         if (logic.voltmeter) {
@@ -548,9 +546,7 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                 } else {
                     const maxMeasurements =
                         logic.type == "battery"
-                            ? logic.values.shownTime *
-                              logic.values.clockSpeed *
-                              logic.values.periodTime
+                            ? logic.values.shownTime * logic.values.clockSpeed
                             : logic.values.measuraments *
                               logic.values.shownTime;
                     const voltmeter = new Oscilloscope(workspace, {
@@ -578,9 +574,7 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                 } else {
                     const maxMeasurements =
                         logic.type == "battery"
-                            ? logic.values.shownTime *
-                              logic.values.clockSpeed *
-                              logic.values.periodTime
+                            ? logic.values.shownTime * logic.values.clockSpeed
                             : logic.values.measuraments *
                               logic.values.shownTime;
                     const amperMeter = new Oscilloscope(workspace, {
@@ -610,9 +604,7 @@ export function openComponentContextMenu(workspace, compObj, worldX, worldY) {
                 } else {
                     const maxMeasurements =
                         logic.type == "battery"
-                            ? logic.values.shownTime *
-                              logic.values.clockSpeed *
-                              logic.values.periodTime
+                            ? logic.values.shownTime * logic.values.clockSpeed
                             : logic.values.measuraments *
                               logic.values.shownTime;
                     const wattMeter = new Oscilloscope(workspace, {
