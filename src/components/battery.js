@@ -118,13 +118,13 @@ class Battery extends Component {
                 );
             this.values.current =
                 this.values.maxCurrent *
-                Math.sin(
+                Math.cos(
                     (Math.PI * this.currentInterval) /
                         ((this.values.clockSpeed * this.values.periodTime) / 2)
                 );
             this.currentInterval++;
         }
-
+        console.log(this.wattMeter);
         if (this.voltmeter) this.voltmeter.measure(this.values.voltage);
         if (this.amperMeter) this.amperMeter.measure(this.values.current);
         if (this.wattMeter) this.wattMeter.measure(this.values.power.value);
