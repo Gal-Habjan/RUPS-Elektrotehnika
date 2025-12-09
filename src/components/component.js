@@ -107,6 +107,8 @@ class Component {
         if (this.start) this.start.destroyNode();
         if (this.end) this.end.destroyNode();
         if (this.voltmeter) this.voltmeter.destroy();
+        if (this.amperMeter) this.amperMeter.destroy();
+        if (this.wattMeter) this.wattMeter.destroy();
         this.voltmeter = null;
     }
 
