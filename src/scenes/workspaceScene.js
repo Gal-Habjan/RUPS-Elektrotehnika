@@ -185,21 +185,6 @@ export default class WorkspaceScene extends Phaser.Scene {
 
         // this.currentChallengeIndex = 0;
 
-        this.promptText = this.add
-            .text(
-                width / 1.8,
-                height - 30,
-                this.challenges[this.currentChallengeIndex].prompt,
-                {
-                    fontSize: "20px",
-                    color: "#333",
-                    fontStyle: "bold",
-                    backgroundColor: "#ffffff88",
-                    padding: { x: 15, y: 8 },
-                }
-            )
-            .setOrigin(0.5);
-
         this.checkText = this.add
             .text(width / 2, height - 70, "", {
                 fontSize: "18px",
@@ -224,62 +209,50 @@ export default class WorkspaceScene extends Phaser.Scene {
             },
         });
 
+        // new UIButton(this, {
+        //     x: width - 140,
+        //     y: 125,
+        //     text: "Preveri krog",
+        //     onClick: () => this.checkCircuit(),
+        //     background: {
+        //         width: 180,
+        //         height: 45,
+        //     },
+        // });
+
+        // new UIButton(this, {
+        //     x: width - 140,
+        //     y: 175,
+        //     text: "Simulacija",
+        //     onClick: () => {
+        //         this.connected = this.graph.simulate();
+        //         if (this.connected == 1) {
+        //             this.checkText.setStyle({ color: "#00aa00" });
+        //             this.checkText.setText("Električni tok je sklenjen");
+        //             this.sim = true;
+        //             return;
+        //         }
+        //         this.checkText.setStyle({ color: "#cc0000" });
+        //         if (this.connected == -1) {
+        //             this.checkText.setText("Manjka ti baterija");
+        //         } else if (this.connected == -2) {
+        //             this.checkText.setText("Stikalo je izklopljeno");
+        //         } else if (this.connected == 0) {
+        //             this.checkText.setText("Električni tok ni sklenjen");
+        //         }
+        //         this.sim = false;
+        //     },
+        //     background: {
+        //         width: 180,
+        //         height: 45,
+        //     },
+        // });
+
         new UIButton(this, {
             x: width - 140,
             y: 125,
-            text: "Preveri krog",
-            onClick: () => this.checkCircuit(),
-            background: {
-                width: 180,
-                height: 45,
-            },
-        });
-
-        new UIButton(this, {
-            x: width - 140,
-            y: 175,
             text: "Simulacija",
-            onClick: () => {
-                this.connected = this.graph.simulate();
-                if (this.connected == 1) {
-                    this.checkText.setStyle({ color: "#00aa00" });
-                    this.checkText.setText("Električni tok je sklenjen");
-                    this.sim = true;
-                    return;
-                }
-                this.checkText.setStyle({ color: "#cc0000" });
-                if (this.connected == -1) {
-                    this.checkText.setText("Manjka ti baterija");
-                } else if (this.connected == -2) {
-                    this.checkText.setText("Stikalo je izklopljeno");
-                } else if (this.connected == 0) {
-                    this.checkText.setText("Električni tok ni sklenjen");
-                }
-                this.sim = false;
-            },
-            background: {
-                width: 180,
-                height: 45,
-            },
-        });
-
-    new UIButton(this, {
-      x: width - 140,
-      y: 225,
-      text: 'new_sim',
-      onClick: () => this.sim.init(),
-      background: {
-        width: 180,
-        height: 45
-      }
-    });
-    window.sim = this.sim; // DEBUGGING PURPOSES
-
-        new UIButton(this, {
-            x: width - 140,
-            y: 275,
-            text: "new_sim",
-            onClick: () => this.sim.generate_tree(),
+            onClick: () => this.sim.init(),
             background: {
                 width: 180,
                 height: 45,
@@ -287,9 +260,21 @@ export default class WorkspaceScene extends Phaser.Scene {
         });
         window.sim = this.sim; // DEBUGGING PURPOSES
 
+        // new UIButton(this, {
+        //     x: width - 140,
+        //     y: 275,
+        //     text: "new_sim",
+        //     onClick: () => this.sim.generate_tree(),
+        //     background: {
+        //         width: 180,
+        //         height: 45,
+        //     },
+        // });
+        // window.sim = this.sim; // DEBUGGING PURPOSES
+
         new UIButton(this, {
             x: width - 140,
-            y: 275,
+            y: 175,
             text: "Formule",
             onClick: () => this.showCalculationFormulas(),
             background: {
@@ -300,7 +285,7 @@ export default class WorkspaceScene extends Phaser.Scene {
 
         new UIButton(this, {
             x: width - 140,
-            y: 325,
+            y: 225,
             text: "Export",
             onClick: () => this.exportComponents(),
             background: {
@@ -311,29 +296,7 @@ export default class WorkspaceScene extends Phaser.Scene {
 
         new UIButton(this, {
             x: width - 140,
-            y: 375,
-            text: "Import",
-            onClick: () => this.importComponents(),
-            background: {
-                width: 180,
-                height: 45,
-            },
-        });
-
-        new UIButton(this, {
-            x: width - 140,
-            y: 325,
-            text: "Export",
-            onClick: () => this.exportComponents(),
-            background: {
-                width: 180,
-                height: 45,
-            },
-        });
-
-        new UIButton(this, {
-            x: width - 140,
-            y: 375,
+            y: 275,
             text: "Import",
             onClick: () => this.importComponents(),
             background: {
@@ -358,14 +321,29 @@ export default class WorkspaceScene extends Phaser.Scene {
             .setOrigin(0.5);
 
         // komponente v stranski vrstici
-        this.createNewComponent(panelWidth / 2, 100, "baterija", 0xffcc00);
-        this.createNewComponent(panelWidth / 2, 180, "upor", 0xff6600);
-        this.createNewComponent(panelWidth / 2, 260, "svetilka", 0xff0000);
-        this.createNewComponent(panelWidth / 2, 340, "stikalo-on", 0x666666);
+        this.createNewComponent(panelWidth / 2, 100 + 20, "baterija", 0xffcc00);
+        this.createNewComponent(panelWidth / 2, 180 + 20, "upor", 0xff6600);
+        this.createNewComponent(panelWidth / 2, 260 + 20, "svetilka", 0xff0000);
+        this.createNewComponent(
+            panelWidth / 2,
+            340 + 20,
+            "stikalo-on",
+            0x666666
+        );
         // this.createNewComponent(panelWidth / 2, 420, "stikalo-off", 0x666666);
         // this.createNewComponent(panelWidth / 2, 500, "žica", 0x0066cc);
-        this.createNewComponent(panelWidth / 2, 580, "ampermeter", 0x00cc66);
-        this.createNewComponent(panelWidth / 2, 660, "voltmeter", 0x00cc66);
+        this.createNewComponent(
+            panelWidth / 2,
+            420 + 20,
+            "ampermeter",
+            0x00cc66
+        );
+        this.createNewComponent(
+            panelWidth / 2,
+            500 + 20,
+            "voltmeter",
+            0x00cc66
+        );
 
         new UIButton(this, {
             x: 12,
@@ -481,8 +459,6 @@ export default class WorkspaceScene extends Phaser.Scene {
         //   });
 
         console.log(JSON.parse(localStorage.getItem("users")));
-
-        this.testOscilloscopeSineWave();
     }
 
     getComponentDetails(type) {
@@ -616,64 +592,6 @@ export default class WorkspaceScene extends Phaser.Scene {
         if (!window.components) window.components = [];
         console.log("Created component:", component);
         window.components.push(component.getData("logicComponent"));
-    }
-
-    checkCircuit() {
-        const currentChallenge = this.challenges[this.currentChallengeIndex];
-        const placedTypes = this.placedComponents.map((comp) =>
-            comp.getData("type")
-        );
-        console.log("components", placedTypes);
-        this.checkText.setStyle({ color: "#cc0000" });
-        // preverjas ce so vse komponente na mizi
-        if (
-            !currentChallenge.requiredComponents.every((req) =>
-                placedTypes.includes(req)
-            )
-        ) {
-            this.checkText.setText("Manjkajo komponente za krog.");
-            return;
-        }
-
-        // je pravilna simulacija
-        if (this.sim == undefined) {
-            this.checkText.setText("Zaženi simlacijo");
-            return;
-        }
-
-        if (this.sim == false) {
-            this.checkText.setText(
-                "Električni krog ni sklenjen. Preveri kako si ga sestavil"
-            );
-            return;
-        }
-
-        // je zaprt krog
-
-        this.checkText.setStyle({ color: "#00aa00" });
-        this.checkText.setText("Čestitke! Krog je pravilen.");
-        this.addPoints(10);
-
-        if (currentChallenge.theory) {
-            this.showTheory(currentChallenge.theory);
-        } else {
-            this.checkText.setStyle({ color: "#00aa00" });
-            this.checkText.setText("Čestitke! Krog je pravilen.");
-            this.addPoints(10);
-            this.time.delayedCall(2000, () => this.nextChallenge());
-        }
-        // this.placedComponents.forEach(comp => comp.destroy());
-        // this.placedComponents = [];
-        // this.time.delayedCall(2000, () => this.nextChallenge());
-        // const isCorrect = currentChallenge.requiredComponents.every(req => placedTypes.includes(req));
-        // if (isCorrect) {
-        //   this.checkText.setText('Čestitke! Krog je pravilen.');
-        //   this.addPoints(10);
-        //   this.time.delayedCall(2000, () => this.nextChallenge());
-        // }
-        // else {
-        //   this.checkText.setText('Krog ni pravilen. Poskusi znova.');
-        // }
     }
 
     showCalculationFormulas() {
@@ -1052,43 +970,6 @@ export default class WorkspaceScene extends Phaser.Scene {
     /**
      * Test function to demonstrate oscilloscope with a sine wave
      */
-    testOscilloscopeSineWave() {
-        // Initialize test parameters
-        let time = 0;
-        const frequency = 0.1; // Hz (10 second period, so we see variation across 10 measurements)
-        const amplitude = 4; // Volts (range -4 to +4, fits within -5 to +5)
-
-        // Create a timer that measures voltage once per second
-        this.oscilloscopeTimer = this.time.addEvent({
-            delay: 1000, // 1 second
-            callback: () => {
-                // Calculate sine wave voltage: V = amplitude * sin(2π * frequency * time)
-                const voltage =
-                    amplitude * Math.sin(2 * Math.PI * frequency * time);
-                // console.logtime:", time, "voltage:", voltage.toFixed(3));
-
-                // Measure the voltage with the oscilloscope
-                if (this.oscilloscope) {
-                    this.oscilloscope.measure(voltage);
-                } else {
-                    console.log("no osciloscope found");
-                }
-
-                time += 1; // Increment time by 1 second
-            },
-            loop: true,
-        });
-    }
-
-    stopOscilloscopeTest() {
-        if (this.oscilloscopeTimer) {
-            this.oscilloscopeTimer.remove();
-            this.oscilloscopeTimer = null;
-        }
-        if (this.oscilloscope) {
-            this.oscilloscope.clear();
-        }
-    }
 
     exportComponents() {
         if (!this.placedComponents || this.placedComponents.length === 0) {
@@ -1127,18 +1008,25 @@ export default class WorkspaceScene extends Phaser.Scene {
                     wireId: comp.end.wire ? comp.end.wire.id : null,
                 },
                 // Export all component values
-                values: {}
+                values: {},
             };
 
             // Export component values (resistance, voltage, current, power, etc.)
             if (comp.values) {
-                Object.keys(comp.values).forEach(key => {
+                Object.keys(comp.values).forEach((key) => {
                     const value = comp.values[key];
                     // Handle both direct values and value objects {value, automatic}
-                    if (typeof value === 'object' && value !== null && 'value' in value) {
+                    if (
+                        typeof value === "object" &&
+                        value !== null &&
+                        "value" in value
+                    ) {
                         componentData.values[key] = {
                             value: value.value,
-                            automatic: value.automatic !== undefined ? value.automatic : false
+                            automatic:
+                                value.automatic !== undefined
+                                    ? value.automatic
+                                    : false,
                         };
                     } else {
                         componentData.values[key] = value;
@@ -1148,9 +1036,15 @@ export default class WorkspaceScene extends Phaser.Scene {
 
             // Backwards compatibility - keep old format for battery and resistor
             if (comp.type === "battery") {
-                componentData.voltage = comp.voltage || comp.values?.voltage?.value || comp.values?.maxVoltage?.value || comp.values?.maxVoltage || 9;
+                componentData.voltage =
+                    comp.voltage ||
+                    comp.values?.voltage?.value ||
+                    comp.values?.maxVoltage?.value ||
+                    comp.values?.maxVoltage ||
+                    9;
             } else if (comp.type === "resistor") {
-                componentData.resistance = comp.resistance || comp.values?.resistance?.value || 100;
+                componentData.resistance =
+                    comp.resistance || comp.values?.resistance?.value || 100;
             }
 
             return componentData;
@@ -1160,7 +1054,7 @@ export default class WorkspaceScene extends Phaser.Scene {
         this.placedComponents.forEach((visualContainer) => {
             const comp = visualContainer.getData("logicComponent");
             const isInPanel = visualContainer.getData("isInPanel");
-            
+
             if (comp && comp.type === "battery" && !isInPanel) {
                 const componentData = exportComponent(visualContainer);
                 if (componentData) {
@@ -1172,7 +1066,11 @@ export default class WorkspaceScene extends Phaser.Scene {
         // Second pass: Export all other components
         this.placedComponents.forEach((visualContainer) => {
             const comp = visualContainer.getData("logicComponent");
-            if (comp && comp.type !== "battery" && !visualContainer.getData("isInPanel")) {
+            if (
+                comp &&
+                comp.type !== "battery" &&
+                !visualContainer.getData("isInPanel")
+            ) {
                 const componentData = exportComponent(visualContainer);
                 if (componentData) {
                     exportData.components.push(componentData);
@@ -1221,7 +1119,9 @@ export default class WorkspaceScene extends Phaser.Scene {
                     const wireMap = new Map();
 
                     // First pass: Find and load the battery first
-                    const batteryData = importData.components.find(compData => compData.type === "battery");
+                    const batteryData = importData.components.find(
+                        (compData) => compData.type === "battery"
+                    );
                     let batteryLogicComponent = null;
 
                     if (batteryData) {
@@ -1232,12 +1132,15 @@ export default class WorkspaceScene extends Phaser.Scene {
                             "baterija",
                             0xffffff
                         );
-                        batteryLogicComponent = visualComponent.getData("logicComponent");
+                        batteryLogicComponent =
+                            visualComponent.getData("logicComponent");
 
                         visualComponent.setData("isInPanel", false);
 
                         if (!window.components) window.components = [];
-                        if (!window.components.includes(batteryLogicComponent)) {
+                        if (
+                            !window.components.includes(batteryLogicComponent)
+                        ) {
                             window.components.push(batteryLogicComponent);
                         }
 
@@ -1258,36 +1161,77 @@ export default class WorkspaceScene extends Phaser.Scene {
                         // Import battery values BEFORE loading other components
                         if (batteryData.voltage) {
                             batteryLogicComponent.voltage = batteryData.voltage;
-                            if (batteryLogicComponent.values && batteryLogicComponent.values.voltage) {
-                                if (typeof batteryLogicComponent.values.voltage === 'object') {
-                                    batteryLogicComponent.values.voltage.value = batteryData.voltage;
+                            if (
+                                batteryLogicComponent.values &&
+                                batteryLogicComponent.values.voltage
+                            ) {
+                                if (
+                                    typeof batteryLogicComponent.values
+                                        .voltage === "object"
+                                ) {
+                                    batteryLogicComponent.values.voltage.value =
+                                        batteryData.voltage;
                                 } else {
-                                    batteryLogicComponent.values.voltage = batteryData.voltage;
+                                    batteryLogicComponent.values.voltage =
+                                        batteryData.voltage;
                                 }
                             }
                         }
 
                         // Import all battery component values (new format)
-                        if (batteryData.values && batteryLogicComponent.values) {
-                            Object.keys(batteryData.values).forEach(key => {
+                        if (
+                            batteryData.values &&
+                            batteryLogicComponent.values
+                        ) {
+                            Object.keys(batteryData.values).forEach((key) => {
                                 const importedValue = batteryData.values[key];
-                                
+
                                 // Handle value objects {value, automatic}
-                                if (typeof importedValue === 'object' && importedValue !== null && 'value' in importedValue) {
-                                    if (typeof batteryLogicComponent.values[key] === 'object' && batteryLogicComponent.values[key] !== null) {
-                                        batteryLogicComponent.values[key].value = importedValue.value;
-                                        if (importedValue.automatic !== undefined) {
-                                            batteryLogicComponent.values[key].automatic = importedValue.automatic;
+                                if (
+                                    typeof importedValue === "object" &&
+                                    importedValue !== null &&
+                                    "value" in importedValue
+                                ) {
+                                    if (
+                                        typeof batteryLogicComponent.values[
+                                            key
+                                        ] === "object" &&
+                                        batteryLogicComponent.values[key] !==
+                                            null
+                                    ) {
+                                        batteryLogicComponent.values[
+                                            key
+                                        ].value = importedValue.value;
+                                        if (
+                                            importedValue.automatic !==
+                                            undefined
+                                        ) {
+                                            batteryLogicComponent.values[
+                                                key
+                                            ].automatic =
+                                                importedValue.automatic;
                                         }
                                     } else {
-                                        batteryLogicComponent.values[key] = importedValue.value;
+                                        batteryLogicComponent.values[key] =
+                                            importedValue.value;
                                     }
                                 } else {
                                     // Direct value
-                                    if (typeof batteryLogicComponent.values[key] === 'object' && batteryLogicComponent.values[key] !== null && 'value' in batteryLogicComponent.values[key]) {
-                                        batteryLogicComponent.values[key].value = importedValue;
+                                    if (
+                                        typeof batteryLogicComponent.values[
+                                            key
+                                        ] === "object" &&
+                                        batteryLogicComponent.values[key] !==
+                                            null &&
+                                        "value" in
+                                            batteryLogicComponent.values[key]
+                                    ) {
+                                        batteryLogicComponent.values[
+                                            key
+                                        ].value = importedValue;
                                     } else {
-                                        batteryLogicComponent.values[key] = importedValue;
+                                        batteryLogicComponent.values[key] =
+                                            importedValue;
                                     }
                                 }
                             });
@@ -1302,8 +1246,14 @@ export default class WorkspaceScene extends Phaser.Scene {
                             label.setText(batteryLogicComponent.values.name);
                         }
 
-                        nodeMap.set(batteryData.start.id, batteryLogicComponent.start);
-                        nodeMap.set(batteryData.end.id, batteryLogicComponent.end);
+                        nodeMap.set(
+                            batteryData.start.id,
+                            batteryLogicComponent.start
+                        );
+                        nodeMap.set(
+                            batteryData.end.id,
+                            batteryLogicComponent.end
+                        );
                     }
 
                     // Second pass: Load all other components
@@ -1312,8 +1262,7 @@ export default class WorkspaceScene extends Phaser.Scene {
                         if (compData.type === "battery") return;
 
                         let visualType;
-                        if (compData.type === "resistor")
-                            visualType = "upor";
+                        if (compData.type === "resistor") visualType = "upor";
                         else if (compData.type === "bulb")
                             visualType = "svetilka";
                         else if (compData.type === "switch")
@@ -1359,38 +1308,72 @@ export default class WorkspaceScene extends Phaser.Scene {
                         this.updateLogicNodePositions(visualComponent);
 
                         // Import component values - backwards compatibility for old format
-                        if (compData.type === "resistor" && compData.resistance) {
+                        if (
+                            compData.type === "resistor" &&
+                            compData.resistance
+                        ) {
                             logicComponent.resistance = compData.resistance;
-                            if (logicComponent.values && logicComponent.values.resistance) {
-                                if (typeof logicComponent.values.resistance === 'object') {
-                                    logicComponent.values.resistance.value = compData.resistance;
+                            if (
+                                logicComponent.values &&
+                                logicComponent.values.resistance
+                            ) {
+                                if (
+                                    typeof logicComponent.values.resistance ===
+                                    "object"
+                                ) {
+                                    logicComponent.values.resistance.value =
+                                        compData.resistance;
                                 } else {
-                                    logicComponent.values.resistance = compData.resistance;
+                                    logicComponent.values.resistance =
+                                        compData.resistance;
                                 }
                             }
                         }
 
                         // Import all component values (new format)
                         if (compData.values && logicComponent.values) {
-                            Object.keys(compData.values).forEach(key => {
+                            Object.keys(compData.values).forEach((key) => {
                                 const importedValue = compData.values[key];
-                                
+
                                 // Handle value objects {value, automatic}
-                                if (typeof importedValue === 'object' && importedValue !== null && 'value' in importedValue) {
-                                    if (typeof logicComponent.values[key] === 'object' && logicComponent.values[key] !== null) {
-                                        logicComponent.values[key].value = importedValue.value;
-                                        if (importedValue.automatic !== undefined) {
-                                            logicComponent.values[key].automatic = importedValue.automatic;
+                                if (
+                                    typeof importedValue === "object" &&
+                                    importedValue !== null &&
+                                    "value" in importedValue
+                                ) {
+                                    if (
+                                        typeof logicComponent.values[key] ===
+                                            "object" &&
+                                        logicComponent.values[key] !== null
+                                    ) {
+                                        logicComponent.values[key].value =
+                                            importedValue.value;
+                                        if (
+                                            importedValue.automatic !==
+                                            undefined
+                                        ) {
+                                            logicComponent.values[
+                                                key
+                                            ].automatic =
+                                                importedValue.automatic;
                                         }
                                     } else {
-                                        logicComponent.values[key] = importedValue.value;
+                                        logicComponent.values[key] =
+                                            importedValue.value;
                                     }
                                 } else {
                                     // Direct value
-                                    if (typeof logicComponent.values[key] === 'object' && logicComponent.values[key] !== null && 'value' in logicComponent.values[key]) {
-                                        logicComponent.values[key].value = importedValue;
+                                    if (
+                                        typeof logicComponent.values[key] ===
+                                            "object" &&
+                                        logicComponent.values[key] !== null &&
+                                        "value" in logicComponent.values[key]
+                                    ) {
+                                        logicComponent.values[key].value =
+                                            importedValue;
                                     } else {
-                                        logicComponent.values[key] = importedValue;
+                                        logicComponent.values[key] =
+                                            importedValue;
                                     }
                                 }
                             });
